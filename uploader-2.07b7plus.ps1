@@ -80,7 +80,7 @@ param ($feature, $remoteHost, $port, $message)
         Write-Host $ErrorMessage "///" $FailedItem
         Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] $feature send to $remotehost : $port result: $Error" -PassThru
+        Add-Content -Path $log -Value "$now : [-] $feature error sending to $remotehost : $port result: $Error" -PassThru
     }
 }
 
@@ -298,7 +298,7 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
     if ( (Compare-Object $(Get-Content $sOutFile) $(Get-Content $oOutFile) ) -eq $null) {
         Write-Host "Previous and current JSONs are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] Script $scriptstart Previous and current JSONs are same"
+        Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current JSONs are same"
         Remove-Item -Path $dest
         Remove-Item -Path $sOutFile
         $now = Get-Date -Format HH:mm:ss.fff
@@ -332,7 +332,7 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
             $FailedItem = $_.Exception.ItemName
             Write-Host $ErrorMessage "///" $FailedItem
             $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : [-] JSON push result: $Error"
+            Add-Content -Path $log -Value "$now : [-] JSON push error: $Error"
         }
     } else {
         Write-Host "JSON push didn't engaged. Element:"$xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'", Status:"$xmlfile.root.ELEM_0.Status ", JSON ="$h.Get_Item('JSON') -ForegroundColor Yellow
@@ -395,12 +395,13 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     }
     Write-Host "$feature Message:" $message -BackgroundColor DarkYellow -ForegroundColor Blue
     Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkYellow -ForegroundColor Blue
+    $messagejoint = $message + "`n" + $rtplus + "`n"
     
     # is NOWPLAYING TYPE different?
     if ($samenowplaying -eq $true) {
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
+        Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
         #$dest.FullName
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [*] Script $scriptstart breaks"
@@ -410,9 +411,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         #Break
     } else {
         # NOWPLAYING TYPE is different
-        New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
-        Start-Sleep -Seconds 4 -Verbose
-        New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $rtplus
+        New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
         # updating original $coOutFile
         Copy-Item -Path $csOutFile -Destination $coOutFile -Force -Recurse
         #Remove-Item -Path $dest.FullName
@@ -433,7 +432,7 @@ if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
         if ($samenowplaying -eq $true) {
             Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
             $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : [-] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
+            Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
             Add-Content -Path $log -Value "$now : [*] Script $scriptstart breaks"
             # deleting current NOWPLAYING
             #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
