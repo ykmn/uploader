@@ -153,7 +153,7 @@ First Artist feat. Second and Third Artist должна быть записан�
 
 Пример лога:
 ------------
-```irc
+```INI
 17:52:02.495 : ** Script 20170726-175202-495 Started
 17:52:02.729 : Now playing: 3/ Robin Schulz/James Blunt - Ok
 17:52:02.948 : [*] Script 20170726-175202-495 finished normally
@@ -166,9 +166,9 @@ First Artist feat. Second and Third Artist должна быть записан�
 17:52:05.010 : [+] RDS string TEXT=Robin Schulz/James Blunt - Ok ** www.europaplus.ru sent to 127.0.0.1 : 1024
 17:52:09.042 : [-] RDS send to 127.0.0.1 : 1024 result: Exception calling "Write" with "3" argument(s): "Unable to write data to the transport connection: An existing connection was forcibly closed by the remote host."
 17:52:09.057 : [+] PROSTREAM1 string t=Robin Schulz/James Blunt - Ok
- sent to omnia1 : 6002
+ sent to prostream-server1 : 6002
 17:52:09.089 : [+] PROSTREAM2 string t=Robin Schulz/James Blunt - Ok
- sent to omnia2 : 6002
+ sent to prostream-server2 : 6002
 17:52:10.511 : [+] FTP1 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175203-963 to ftp1.hosting.local OK
 17:52:13.339 : [+] FTP2 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175203-963 to ftp2.hosting.local OK
 17:52:13.479 : [*] Script 20170726-175203-963 finished normally
@@ -187,9 +187,9 @@ First Artist feat. Second and Third Artist должна быть записан�
 17:53:40.092 : [+] RDS string TEXT=www.europaplus.ru sent to 127.0.0.1 : 1024
 17:53:44.154 : [+] RDS string RT+TAG=04,00,00,01,00,00,1,1 sent to 127.0.0.1 : 1024
 17:53:44.170 : [+] PROSTREAM1 string t=
- sent to omnia1 : 6002
+ sent to prostream-server1 : 6002
 17:53:44.201 : [+] PROSTREAM2 string t=
- sent to omnia2 : 6002
+ sent to prostream-server2 : 6002
 17:53:44.389 : [*] Script 20170726-175339-732 finished normally
 17:53:44.936 : ** Script 20170726-175344-936 Started
 17:53:45.154 : Now playing: 2/  - Vilet
@@ -233,9 +233,9 @@ First Artist feat. Second and Third Artist должна быть записан�
 17:53:51.608 : [+] RDS string TEXT=Kadebostany - Mind If I Stay (Astero Remix) ** www.europaplus.ru sent to 127.0.0.1 : 1024
 17:53:55.608 : [+] RDS string RT+TAG=04,00,11,01,14,29,1,1 sent to 127.0.0.1 : 1024
 17:53:55.639 : [+] PROSTREAM1 string t=Kadebostany - Mind If I Stay (Astero Remix)
- sent to omnia1 : 6002
+ sent to prostream-server1 : 6002
 17:53:55.670 : [+] PROSTREAM2 string t=Kadebostany - Mind If I Stay (Astero Remix)
- sent to omnia2 : 6002
+ sent to prostream-server2 : 6002
 17:53:56.561 : [+] FTP1 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175350-951 to ftp1.hosting.local OK
 17:53:59.514 : [+] FTP2 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175350-951 to ftp2.hosting.local OK
 17:53:59.639 : [*] Script 20170726-175350-951 finished normally
@@ -259,9 +259,9 @@ First Artist feat. Second and Third Artist должна быть записан�
 17:56:58.880 : [+] RDS string TEXT=www.europaplus.ru sent to 127.0.0.1 : 1024
 17:57:02.927 : [-] RDS send to 127.0.0.1 : 1024 result: Exception calling "Write" with "3" argument(s): "Unable to write data to the transport connection: An existing connection was forcibly closed by the remote host."
 17:57:02.942 : [+] PROSTREAM1 string t=
- sent to omnia1 : 6002
+ sent to prostream-server1 : 6002
 17:57:02.942 : [+] PROSTREAM2 string t=
- sent to omnia2 : 6002
+ sent to prostream-server2 : 6002
 17:57:03.161 : [*] Script 20170726-175658-536 finished normally
 17:57:04.396 : ** Script 20170726-175704-396 Started
 17:57:04.614 : Now playing: 3/ Alan Walker - Faded
@@ -275,9 +275,9 @@ First Artist feat. Second and Third Artist должна быть записан�
 17:57:06.599 : [+] RDS string TEXT=Alan Walker - Faded ** www.europaplus.ru sent to 127.0.0.1 : 1024
 17:57:10.599 : [+] RDS string RT+TAG=04,00,11,01,14,05,1,1 sent to 127.0.0.1 : 1024
 17:57:10.615 : [+] PROSTREAM1 string t=Alan Walker - Faded
- sent to omnia1 : 6002
+ sent to prostream-server1 : 6002
 17:57:10.615 : [+] PROSTREAM2 string t=Alan Walker - Faded
- sent to omnia2 : 6002
+ sent to prostream-server2 : 6002
 17:57:11.365 : [+] FTP1 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175705-489 to ftp1.hosting.local OK
 17:57:14.271 : [+] FTP2 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175705-489 to ftp2.hosting.local OK
 17:57:14.380 : [*] Script 20170726-175705-489 finished normally
