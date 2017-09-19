@@ -10,7 +10,7 @@ $debug = $false
 Clear-Host
 [string]$currentdir = Get-Location
 
-Write-Host "Uploader 2.07beta7 <r.ermakov@emg.fm> 2017-07-25"
+Write-Host "Uploader 2.07beta8 <r.ermakov@emg.fm> 2017-09-19"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -111,6 +111,9 @@ if (!(Test-Path $currentdir"\log")) {
 if (!(Test-Path $currentdir"\tmp")) {
     New-Item -Path $currentdir"\tmp" -Force -ItemType Directory | Out-Null
 }
+if (!(Test-Path $currentdir"\jsons")) {
+    New-Item -Path $currentdir"\jsons" -Force -ItemType Directory | Out-Null
+}
 $log = $currentdir + "\Log\" + $today + "-" + $cfg + ".log" 
 $scriptstart = Get-Date -Format yyyyMMdd-HHmmss-fff
 $now = Get-Date -Format HH:mm:ss.fff
@@ -155,7 +158,7 @@ $ReplacementTable = @{
 
 # creating array
 $stream = @{stream = $cfg}
-$songs = @();
+[array]$songs = @();
 
 <# required json format:
 {
@@ -225,7 +228,7 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
         ELEM = $el
     }
     $currentobj = New-Object PSObject -Property $current
-    $songs += $currentobj
+    [array]$songs += $currentobj
 }
    
 # show what we got in array
@@ -243,7 +246,7 @@ if ((Test-Path $oOutFile) -eq $false) {
     Add-Content -Path $oOutFile -Value " blank file"
 }
 # adding table @($songs) to array $stream
-$stream.Add("songs",(@($songs) | Sort-Object -Unique ELEM))
+$stream.Add("songs",@(@($songs) | Sort-Object -Unique ELEM))
 
 
 # getting current A/T
@@ -501,8 +504,11 @@ if ( `
 
 # cleaning up
 # leave temp files if debug
-if ($debug -ne $true ) { Remove-Item -Path $dest }
-if ($debug -ne $true ) { Remove-Item -Path $csOutFile }
+if ($debug -ne $true ) {
+    if (Test-Path $dest) { Remove-Item -Path $dest }
+    if (Test-Path $sOutFile) { Remove-Item -Path $sOutFile }
+    if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile }
+}
 
 $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : [*] Script $scriptstart finished normally"
@@ -519,7 +525,6 @@ v2.04 2017-03-29 more cleanup for Camel Case; settings are now in external confi
 v2.05 2017-05-25 extracting A/T and other values to .json; pushing JSON to HTTP and uploading to FTP only if current type is music;
 v2.06 2017-06-06 checking for another instance of script, added "fun with flags".
 v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.txt
-
 
 Usage: uploader.ps1 config.cfg
 
