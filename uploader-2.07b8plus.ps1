@@ -5,12 +5,14 @@
  )
 
 # if $debug set to $true then temporary xmls and jsons will not be removed
+# if $force set to $true then we didn't compare jsons and forcing push to webserver
 $debug = $false
+$force = $false
 
 Clear-Host
 [string]$currentdir = Get-Location
 
-Write-Host "Uploader 2.07beta8 <r.ermakov@emg.fm> 2017-09-19"
+Write-Host "Uploader 2.07beta9 <r.ermakov@emg.fm> 2017-12-20"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -153,6 +155,8 @@ $ReplacementTable = @{
 "lp" = "LP"
 "abba" = "ABBA"
 "modjo" = "Modjo"
+"Jp" = "JP"
+"Mccartney" = "McCartney"
 "  " = " "
 };
 
@@ -166,11 +170,11 @@ $stream = @{stream = $cfg}
 "songs": [ 
     {
     "dbID": "63695",
-    "artist": "Alla Pugachiova",
+    "artist": "Алла Пугачёва",
     "runtime": "225550",
     "type": "3",
     "ELEM": 0,
-    "title": "Prosti,Pover\u0027",
+    "title": "Прости, поверь",
     "starttime": "1499879633"
     },
  ]
@@ -195,6 +199,29 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
         $artist=""
     }
     $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
+    # Searching for Russian Artist/Title
+    # !!! CHECK FOR CORRECT ID IN YOUR UserAttribs SECTION IN XML
+    # <UserAttribs>
+    #    <ELEM><ID dt="i4">7</ID>
+    #          <Name>Русский исполнитель</Name><Value>Алла Пугачёва</Value></ELEM>
+    #    <ELEM><ID dt="i4">17</ID>
+    #          <Name>Русское название композиции</Name><Value>Прости, поверь</Value></ELEM>
+    # </UserAttribs>
+    ForEach ($userattr in $elem.Elem.UserAttribs.ChildNodes) {
+        Write-Host $userattr.Name -BackgroundColor Red
+        Write-Host $userattr.Value -BackgroundColor Red
+        Write-Host $userattr.ID.'#text' -BackgroundColor DarkCyan
+        if ($userattr.ID.'#text' -eq '7') {
+            $rartist = $userattr.Value
+            Write-Host $rartist -BackgroundColor DarkCyan
+            $artist = $rartist
+        }
+        if ($userattr.ID.'#text' -eq '17') {
+            $rtitle = $userattr.Value
+            Write-Host $rtitle -BackgroundColor DarkCyan
+            $title = $rtitle
+        }   
+    }
     [int]$starttime = $elem.Elem.StartTime.'#text'
     [int]$runtime = [math]::Floor([decimal]$elem.Elem.Runtime.'#text' / 1000)
     Write-Host "Element" $el ":" $artist "-" $title
@@ -298,7 +325,7 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
 
     
     # compare current .json and last .json
-    if ( (Compare-Object $(Get-Content $sOutFile) $(Get-Content $oOutFile) ) -eq $null) {
+    if ( ((Compare-Object $(Get-Content $sOutFile) $(Get-Content $oOutFile) ) -eq $null) -and ($force -ne $true) ) {
         Write-Host "Previous and current JSONs are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current JSONs are same"
