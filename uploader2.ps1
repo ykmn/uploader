@@ -170,11 +170,11 @@ $stream = @{stream = $cfg}
 "songs": [ 
     {
     "dbID": "63695",
-    "artist": "Алла Пугачёва",
+    "artist": "РђР»Р»Р° РџСѓРіР°С‡С‘РІР°",
     "runtime": "225550",
     "type": "3",
     "ELEM": 0,
-    "title": "Прости, поверь",
+    "title": "РџСЂРѕСЃС‚Рё, РїРѕРІРµСЂСЊ",
     "starttime": "1499879633"
     },
  ]
@@ -203,20 +203,22 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
     # !!! CHECK FOR CORRECT ID IN YOUR UserAttribs SECTION IN XML
     # <UserAttribs>
     #    <ELEM><ID dt="i4">7</ID>
-    #          <Name>Русский исполнитель</Name><Value>Алла Пугачёва</Value></ELEM>
+    #          <Name>Р СѓСЃСЃРєРёР№ РёСЃРїРѕР»РЅРёС‚РµР»СЊ</Name><Value>РђР»Р»Р° РџСѓРіР°С‡С‘РІР°</Value></ELEM>
     #    <ELEM><ID dt="i4">17</ID>
-    #          <Name>Русское название композиции</Name><Value>Прости, поверь</Value></ELEM>
+    #          <Name>Р СѓСЃСЃРєРѕРµ РЅР°Р·РІР°РЅРёРµ</Name><Value>РџСЂРѕСЃС‚Рё, РїРѕРІРµСЂСЊ</Value></ELEM>
     # </UserAttribs>
     ForEach ($userattr in $elem.Elem.UserAttribs.ChildNodes) {
         Write-Host $userattr.Name -BackgroundColor Red
         Write-Host $userattr.Value -BackgroundColor Red
         Write-Host $userattr.ID.'#text' -BackgroundColor DarkCyan
         if ($userattr.ID.'#text' -eq '7') {
+            # Russian artist
             $rartist = $userattr.Value
             Write-Host $rartist -BackgroundColor DarkCyan
             $artist = $rartist
         }
         if ($userattr.ID.'#text' -eq '17') {
+            # Russian title
             $rtitle = $userattr.Value
             Write-Host $rtitle -BackgroundColor DarkCyan
             $title = $rtitle
@@ -348,6 +350,8 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
         Write-Host "---- Running JSON ----" -BackgroundColor DarkGreen -ForegroundColor White
         $jsonserver = $h.Get_Item("JSONSERVER")
         $json
+        # converting to UTF-8
+        $json = [System.Text.Encoding]::UTF8.GetBytes($json)
         
         $Error.Clear()
         try { 
