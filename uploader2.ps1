@@ -12,7 +12,7 @@ $force = $false
 Clear-Host
 [string]$currentdir = Get-Location
 
-Write-Host "Uploader 2.07beta9 <r.ermakov@emg.fm> 2017-12-20"
+Write-Host "Uploader 2.07beta9 <r.ermakov@emg.fm> 2017-12-25"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -141,24 +141,28 @@ Write-Host
 
 # Here goes replacement table
 $ReplacementTable = @{
-"pi_" = ""
-"pi " = ""
-"_id_ep live" = ""
-"new_" = ""
-"md_" = ""
-"edit_" = ""
-"_" = " "
-"dj " = "DJ "
-"ft." = "feat."
-"feat." = "feat."
-"ajr" = "AJR"
-"lp" = "LP"
-"abba" = "ABBA"
-"modjo" = "Modjo"
-"Jp" = "JP"
-"Mccartney" = "McCartney"
-"  " = " "
-};
+    ";" = "/"
+    "Pi_" = ""
+    "Pi " = ""
+    "new_" = ""
+    "md_" = ""
+    "edit_" = ""
+    "New_" = ""
+    "Md_" = ""
+    "Edit_" = ""
+    "_" = " "
+    "Dj " = "DJ "
+    "ft." = "feat."
+    "feat." = "feat."
+    "Ajr" = "AJR"
+    "Lp" = "LP"
+    "abba" = "ABBA"
+    "Modjo" = "Modjo"
+    "Jp" = "JP"
+    "Mccartney" = "McCartney"
+    "  " = " "
+    };
+    
 
 # creating array
 $stream = @{stream = $cfg}
@@ -261,6 +265,13 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
 }
    
 # show what we got in array
+@($songs) | Sort-Object -Unique ELEM | Format-Table
+
+# trimming songs array to current and two next-up elements
+if ($songs.Count -ge 3) {
+    $songs = $songs[0,1,2]
+}
+Write-Host "Trimming songs array to current and two next-up elements:"
 @($songs) | Sort-Object -Unique ELEM | Format-Table
 
 # file $sOutFile is json for current script;
