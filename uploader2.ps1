@@ -1,8 +1,8 @@
 # Handling command-line parameters
- param (
+param (
     #[string]$cfg = "d:\temp\uploader\test-rr.cfg"
     [Parameter(Mandatory=$true)][string]$cfg 
- )
+)
 
 # if $debug set to $true then temporary xmls and jsons will not be removed
 # if $force set to $true then we didn't compare jsons and forcing push to webserver
@@ -10,6 +10,7 @@ $debug = $false
 $force = $false
 
 Clear-Host
+[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 [string]$currentdir = Get-Location
 
 Write-Host "Uploader 2.07beta9 <r.ermakov@emg.fm> 2017-12-25"
@@ -141,27 +142,25 @@ Write-Host
 
 # Here goes replacement table
 $ReplacementTable = @{
-    ";" = "/"
-    "Pi_" = ""
-    "Pi " = ""
-    "new_" = ""
-    "md_" = ""
-    "edit_" = ""
-    "New_" = ""
-    "Md_" = ""
-    "Edit_" = ""
-    "_" = " "
-    "Dj " = "DJ "
-    "ft." = "feat."
-    "feat." = "feat."
-    "Ajr" = "AJR"
-    "Lp" = "LP"
-    "abba" = "ABBA"
-    "Modjo" = "Modjo"
-    "Jp" = "JP"
-    "Mccartney" = "McCartney"
-    "  " = " "
-    };
+';' = '/';
+'Pi ' = '';
+'Pi_' = '';
+'New_' = '';
+'Md_' = '';
+'Edit_' = '';
+'_' = ' ';
+'Dj ' = 'DJ ';
+'Ft.' = 'feat.';
+'Feat.' = 'feat.';
+'Ajr' = 'AJR';
+'Lp' = 'LP';
+'Abba' = 'ABBA';
+'Modjo' = 'Modjo';
+'Jp' = 'JP';
+'Mccartney' = 'McCartney';
+'Onerepublic' = 'OneRepublic';
+'  ' = ' '
+};
     
 
 # creating array
@@ -204,18 +203,25 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
     }
     $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
     # Searching for Russian Artist/Title
-    # !!! CHECK FOR CORRECT ID IN YOUR UserAttribs SECTION IN XML
+    # !!! CHECK FOR CORRECT ID IN UserAttribs SECTION IN XML
     # <UserAttribs>
     #    <ELEM><ID dt="i4">7</ID>
-    #          <Name>Русский исполнитель</Name><Value>Алла Пугачёва</Value></ELEM>
+    #          <Name>Русский исполнитель</Name><Value>Алла Пугачева</Value></ELEM>
     #    <ELEM><ID dt="i4">17</ID>
-    #          <Name>Русское название</Name><Value>Прости, поверь</Value></ELEM>
+    #          <Name>Русское название композиции</Name><Value>Прости, поверь</Value></ELEM>
     # </UserAttribs>
     ForEach ($userattr in $elem.Elem.UserAttribs.ChildNodes) {
         Write-Host $userattr.Name -BackgroundColor Red
         Write-Host $userattr.Value -BackgroundColor Red
         Write-Host $userattr.ID.'#text' -BackgroundColor DarkCyan
-        if ($userattr.ID.'#text' -eq '7') {
+        # 
+        if ( `
+        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-MSK.xml')) -or `
+        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-INTERNET_1.xml')) -or `
+        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-INTERNET_2.xml')) -or `
+        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-INTERNET_3.xml')) -or `
+        (($userattr.ID.'#text' -eq '8') -and ($xmlf.Name -eq 'EP-MSK2.xml')) `
+        ) {
             # Russian artist
             $rartist = $userattr.Value
             Write-Host $rartist -BackgroundColor DarkCyan
@@ -228,19 +234,28 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
             $title = $rtitle
         }   
     }
+
+
     [int]$starttime = $elem.Elem.StartTime.'#text'
     [int]$runtime = [math]::Floor([decimal]$elem.Elem.Runtime.'#text' / 1000)
     Write-Host "Element" $el ":" $artist "-" $title
-    if ($artist) { $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower()) }
-    if ($title) { $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower()) }
 
-    foreach ($i in $ReplacementTable.Keys) {
-    # if variable defined
-        if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
-        if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
+    # culture and replacements for A/T
+    if ($artist -ne $null) {
+        $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower())
+        $artist = $artist.Trim()
+    } else { $artist = "" }
+    if ($title -ne $null) { 
+        $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower())
+        $title = $title.Trim()
+    } else { $title = "" }
+        
+    ForEach ($i in $ReplacementTable.Keys) {
+        # if variable defined
+            if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
+            if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
     }
-    if ($artist) { $artist = $artist.Trim() } else { $artist = "" }
-    if ($title) { $title = $title.Trim() } else { $title = ""}
+    
 
 
     $utoday = Get-Date -Format dd/MM/yyyy | Get-Date -UFormat %s
@@ -269,6 +284,7 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
 
 # trimming songs array to current and two next-up elements
 if ($songs.Count -ge 3) {
+    $songs = $songs | Sort-Object -Unique ELEM
     $songs = $songs[0,1,2]
 }
 Write-Host "Trimming songs array to current and two next-up elements:"
@@ -300,18 +316,24 @@ $artist = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Artist
     $artist=""
 } #>
 $title = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Name
-foreach ($i in $ReplacementTable.Keys) {
-    # if variable defined
-    if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
-    if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
-}
-if ($artist -ne $null) { $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower()) ; $artist = $artist.Trim() } else { $artist = "" }
+
+# culture and replacements for A/T
+if ($artist -ne $null) {
+    $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower())
+    $artist = $artist.Trim()
+} else { $artist = "" }
 if ($title -ne $null) { 
     $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower())
     $title = $title.Trim()
 } else { $title = "" }
-
+        
+ForEach ($i in $ReplacementTable.Keys) {
+    # if variable defined
+        if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
+        if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
+}
     
+
 # now we have $artist $title $type of "now playing" ELEM_0
 Write-Host "Now"$xmlfile.root.ELEM_0.Status":" -BackgroundColor DarkYellow -ForegroundColor Blue
 Write-Host $type"/ "$artist "-" $title
