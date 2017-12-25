@@ -293,12 +293,12 @@ $stream.Add("songs",@(@($songs) | Sort-Object -Unique ELEM))
 $type = $xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'
 $artist = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Artist
 # if ; in Artist then artist should be inside name
-if (Select-String -pattern ";" -InputObject $artist) {
+<# if (Select-String -pattern ";" -InputObject $artist) {
     $now = Get-Date -Format HH:mm:ss.fff
     Add-Content -Path $log -Value "$now : Artist $artist contains ';' - artist will be disabled."
     Write-Host "Artist $artist contains ';' - artist will be disabled." -ForegroundColor Yellow
     $artist=""
-}
+} #>
 $title = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Name
 foreach ($i in $ReplacementTable.Keys) {
     # if variable defined
