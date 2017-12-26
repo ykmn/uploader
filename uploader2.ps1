@@ -168,19 +168,12 @@ $stream = @{stream = $cfg}
 [array]$songs = @();
 
 <# required json format:
-{
-"stream"": "main",
-"songs": [ 
-    {
-    "dbID": "63695",
-    "artist": "Алла Пугачёва",
-    "runtime": "225550",
-    "type": "3",
-    "ELEM": 0,
-    "title": "Прости, поверь",
-    "starttime": "1499879633"
-    },
- ]
+{ "stream":  "test-rr.cfg",
+  "songs":  [
+	{ "artist":  "Arilena Ara", "runtime":  149, "dbID":  "151597", "ELEM":  0, "title":  "Nentori (Beverly Pills Remix)", "starttime":  1500984064 },
+	{ "artist":  "Nickelback", "runtime":  197, "dbID":  "1274", "ELEM":  2, "title":  "If Everyone Cared", "starttime":  1500984223 },
+	{ "artist":  "Charlie Puth", "runtime":  203, "dbID":  "152322", "ELEM":  5, "title":  "Attention", "starttime":  1500984426 }
+  ]
 }    #>
 
 # filling the array of next-up songs
