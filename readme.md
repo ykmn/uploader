@@ -13,8 +13,6 @@ Uploader 2.07.010
 	{ "artist":  "Arilena Ara", "runtime":  149, "dbID":  "151597", "ELEM":  0, "title":  "Nentori (Beverly Pills Remix)", "starttime":  1500984064 },
 	{ "artist":  "Nickelback", "runtime":  197, "dbID":  "1274", "ELEM":  2, "title":  "If Everyone Cared", "starttime":  1500984223 },
 	{ "artist":  "Charlie Puth", "runtime":  203, "dbID":  "152322", "ELEM":  4, "title":  "Attention", "starttime":  1500984426 },
-	{ "artist":  "Sergey Lazarev", "runtime":  241, "dbID":  "152498", "ELEM":  6, "title":  "Lucky Stranger", "starttime":  1500984635 },
-	{ "artist":  "Palastic/Bright Sparks", "runtime":  185, "dbID":  "152640", "ELEM":  8, "title":  "Lying In The Sun", "starttime":  1500984891}
 	]
 }
 ```
@@ -248,3 +246,17 @@ powershell -NoProfile -ExecutionPolicy bypass -File "uploader-2.ps1" %1
 17:57:14.271 : [+] FTP2 upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2.xml.20170726-175705-489 to ftp2.hosting.local OK
 17:57:14.380 : [*] Script 20170726-175705-489 finished normally
 ```
+
+Версии:
+-------
+v1.00 2015-10-09 отправка XML на удалённые FTP.
+v1.01 2015-10-30 добавлено протоколирование результатов загрузки.
+v2.00 2016-01-14 добавлен разбор XML на A/T.
+v2.01 2016-11-17 добавлена оценка типа элемента (музыка/джингы/реклама); добавлена отправка в RDS-кодер DEVA.
+v2.02 2016-11-18 добавлено окультуривание Artist/Title; добавлена поддержка RT+ для RDS; некоторые дополнительные проверки.
+v2.03 2017-03-24 способ проверки хоста изменён с пинга на Microsoft PortQuery
+v2.04 2017-03-29 добавлено удаление служебной информации из A/T; настройки теперь во внешнем файле конфигурации!
+v2.05 2017-05-25 A/T и другие данные сохраняются в .json; отправка JSON на HTTP и выгрузка XML на FTP только если текущий тип элемента - музыка;
+v2.06 2017-06-06 добавлена проверка, запущен ли другой экземпляр скрипта, чтобы избежать множественной отправки одинаковых данных (https://redmine.digispot.ru/issues/44826)
+v2.07 2017-07-13 скрипт переписан на Windows Powershell; добавлена отправка A/T в Omnia ProStream.
+v2.07.010 2017-12-26 количество найденных следующих песен ограничено двумя; добавлено использование русских A/T из пользовательских атрибутов.
