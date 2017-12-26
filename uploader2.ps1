@@ -13,7 +13,7 @@ Clear-Host
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 [string]$currentdir = Get-Location
 
-Write-Host "Uploader 2.07beta9 <r.ermakov@emg.fm> 2017-12-25"
+Write-Host "Uploader 2.07.010 <r.ermakov@emg.fm> 2017-12-26"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -88,11 +88,11 @@ param ($feature, $remoteHost, $port, $message)
 }
 
 # Reading settings
-Get-Content $cfg | foreach-object -begin {$h=@{}} -process {
+Get-Content $cfg | ForEach-Object -begin { $h=@{} } -process {
     $k = [regex]::split($_,'=');
-    if(($k[0].CompareTo("") -ne 0) `
-                -and ($k[0].StartsWith("[") -ne $True) `
-                -and ($k[0].StartsWith("#") -ne $True))
+    if (($k[0].CompareTo("") -ne 0) `
+      -and ($k[0].StartsWith("[") -ne $True) `
+      -and ($k[0].StartsWith("#") -ne $True) )
     {
         $h.Add($k[0], $k[1])
     }
@@ -212,22 +212,18 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
     # </UserAttribs>
     ForEach ($userattr in $elem.Elem.UserAttribs.ChildNodes) {
         Write-Host $userattr.Name -BackgroundColor Red
-        Write-Host $userattr.Value -BackgroundColor Red
         Write-Host $userattr.ID.'#text' -BackgroundColor DarkCyan
+        # get UserAttribs Russian Artist and Title IDs from config
+        $rartistid = $h.Get_Item("RARTISTID")
+        $rtitleid = $h.Get_Item("RTITLEID")
         # 
-        if ( `
-        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-MSK.xml')) -or `
-        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-INTERNET_1.xml')) -or `
-        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-INTERNET_2.xml')) -or `
-        (($userattr.ID.'#text' -eq '7') -and ($xmlf.Name -eq 'RR-INTERNET_3.xml')) -or `
-        (($userattr.ID.'#text' -eq '8') -and ($xmlf.Name -eq 'EP-MSK2.xml')) `
-        ) {
+        if ($userattr.ID.'#text' -eq $rartistid) {
             # Russian artist
             $rartist = $userattr.Value
             Write-Host $rartist -BackgroundColor DarkCyan
             $artist = $rartist
         }
-        if ($userattr.ID.'#text' -eq '17') {
+        if ($userattr.ID.'#text' -eq $rtitleid) {
             # Russian title
             $rtitle = $userattr.Value
             Write-Host $rtitle -BackgroundColor DarkCyan

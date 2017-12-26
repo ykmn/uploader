@@ -1,6 +1,6 @@
-Uploader 2.07beta9
+Uploader 2.07.010
 ==================
-20.12.2017 Roman Ermakov <r.ermakov@emg.fm>
+26.12.2017 Roman Ermakov <r.ermakov@emg.fm>
 
 Программа предназначена для обработки XML-файла с метаданными от Джин.ValueServer и отправки метаданных различным получателям.
 В качестве получателей метаданных могут выступать:
@@ -40,51 +40,11 @@ Get-Command -Module WinSCP
 
 Настройка.
 ---------------------------
-1. Создайте файл конфигурации по примеру ниже и сохраните его в "myradio.cfg" в папку со скриптом.
+1. Отредактируйте файл конфигурации *.example и сохраните его в "myradio.cfg" в папку со скриптом.
 Не забудьте добавить `/` в конец FTP-пути. Если в адресе сервера FTP явно не указан порт в виде address:port , то будет использоваться порт по-умолчанию (:21).
 В файле конфигурации строки, начинающиеся с [ и # не обрабатываются, их можно использовать как названия секций и комментарии.
- 
-```INI
-[Actions]
-# set TRUE to enable action or FALSE to disable
-JSON=TRUE
-FTP1=TRUE
-FTP2=FALSE
-RDS=TRUE
-PROSTREAM1=TRUE
-PROSTREAM2=TRUE
 
-[XML]
-# Using XML from Digispot II Value.Server with XML.Writer module
-XMLF=\\server\share\EP-MSK.xml
 
-[RDS]
-RDSIP=127.0.0.1
-RDSPORT=1024
-RDSSITE=www.europaplus.ru
-RDSPHONE=+7(495)6204664
-
-[JSON]
-JSONSERVER=http://127.0.0.1/post.php
-
-[FTP1]
-FTPSERVER1=127.0.0.1:30021
-FTPUSER1=user1
-FTPPASS1=pass1
-FTPPATH1=/pub/uploads/Radio1/
-
-[FTP2]
-FTPSERVER2=127.0.0.1:21
-FTPUSER2=user2
-FTPPASS2=pass2
-FTPPATH2=/
-
-[PROSTREAM]
-ZIPSERVER1=prostream-server1
-ZIPPORT1=6001
-ZIPSERVER2=prostream-server2
-ZIPPORT2=6001
-```
 2. Файл `runps.bat` нужен для запуска PowerShell-скрипта из Джина.ValueServer. Этот файл должен находиться в рабочей папке с PS-скриптом,
 например, в "C:\Program Files (x86)\Digispot II\Uploader"
 В связи с особенностями запуска приложений из Джина, в `runps.bat` необходим явный переход в папку, где находится скрипт.
@@ -110,9 +70,26 @@ powershell -NoProfile -ExecutionPolicy bypass -File "uploader-2.ps1" %1
 * Из всех веток с идентификаторами элемента ELEM_0 ... ELEM_23 выбираются объекты с типом фонограммы = 3 (песня).
 * Для каждого объекта "песня" выбираются значения: **Type**, **dbID**, **Artist**, **Name**, **Starttime**, **Runtime**.
 * Идентификатор каждого элемента (например, ELEM_6) разделяется на две части, правая часть конвертируется в десятичное число и сохраняется как порядковый номер элемента.
-* Если в МБД используются пользовательские атрибуты (User Attributes) "Русский исполнитель" и "Русское название", то необходимо заменить соответствующие им ID 7 и 17 в строках скрипта:
-`if ($userattr.ID.'#text' -eq '7') {` и `if ($userattr.ID.'#text' -eq '17') {`
-Значения ID пользовательских атрибутов можно посмотреть в вашем выгружаемом XML: `<UserAttribs><ELEM><ID dt="i4">7</ID><Name>Русский исполнитель</Name><Value>АЛЛА ПУГАЧЁВА</Value></ELEM><ELEM><ID dt="i4">17</ID><Name>Русское название композиции</Name><Value>ПРОСТИ, ПОВЕРЬ</Value></ELEM></UserAttribs>`
+* Если в МБД используются пользовательские атрибуты (User Attributes) "Русский исполнитель" и "Русское название композиции", то в файле конфигурации в значения RARTISTID и RTITLEID необходимо указать соответствующие им ID:
+Значения ID пользовательских атрибутов можно посмотреть в вашем выгружаемом XML:
+```XML
+<root>
+  <ELEM_0>
+    <Elem>
+      <UserAttribs>
+        <ELEM>
+          <ID dt="i4">7</ID>
+          <Name>Русский исполнитель</Name>
+          <Value>АЛЛА ПУГАЧЁВА</Value>
+        </ELEM>
+        <ELEM>
+          <ID dt="i4">17</ID>
+          <Name>Русское название композиции</Name>
+          <Value>ПРОСТИ, ПОВЕРЬ</Value>
+        </ELEM>
+      </UserAttribs>
+```
+
 * Значение **Artist** приводится к нижнему регистру, затем к TitleCase (первая буква заглавная, остальные строчные).
 * Значение **Name** приводится к нижнему регистру, затем к TitleCase (первая буква заглавная, остальные строчные).
 * Значение **Runtime** переводится из миллисекунд в секунды и округляется в бо́льшую сторону.
