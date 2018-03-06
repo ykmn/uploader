@@ -13,7 +13,8 @@ Clear-Host
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 [string]$currentdir = Get-Location
 
-Write-Host "Uploader 2.07.010 <r.ermakov@emg.fm> 2017-12-26"
+#####################################################################################
+Write-Host "Uploader 2.07.011 <r.ermakov@emg.fm> 2018-03-06"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -67,13 +68,14 @@ param ($ftp, $user, $pass, $xmlf, $remotepath, $feature)
 
 function New-TCPSend {
 param ($feature, $remoteHost, $port, $message)
-# sending to ip-port
-    $socket = new-object System.Net.Sockets.TcpClient($remoteHost, $port)
-    $data1 = [System.Text.Encoding]::ASCII.GetBytes($message)
+# sending to tcp port
+    $sock = New-Object System.Net.Sockets.TcpClient($remoteHost, $port)
+    $encodedData = [System.Text.Encoding]::ASCII.GetBytes($message)
     $Error.Clear()
     try { 
-        $stream = $socket.GetStream()
-        $stream.Write($data1, 0, $data1.Length)
+        $stream = $sock.GetStream()
+        $stream.Write($encodedData, 0, $encodedData.Length)
+        $sock.Close()
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [+] $feature string $message sent to $remotehost : $port" -PassThru
     } catch {
@@ -83,7 +85,48 @@ param ($feature, $remoteHost, $port, $message)
         Write-Host $ErrorMessage "///" $FailedItem
         Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] $feature error sending to $remotehost : $port result: $Error" -PassThru
+        Add-Content -Path $log -Value "$now : [-] $feature error tcp-sending to $remotehost : $port result: $Error" -PassThru
+    }
+}
+
+function New-UDPSend {
+param ($feature, $remoteHost, $port, $message)
+# sending to udp port
+    $Error.Clear()
+    try { 
+        #[int] $Port = 20000
+        $Address = [system.net.IPAddress]::Parse($remoteHost) 
+        
+        # Create IP Endpoint 
+        $End = New-Object System.Net.IPEndPoint $address, $port 
+        
+        # Create Socket 
+        $saddrf   = [System.Net.Sockets.AddressFamily]::InterNetwork 
+        $stype    = [System.Net.Sockets.SocketType]::Dgram 
+        $ptype    = [System.Net.Sockets.ProtocolType]::UDP 
+        $sock     = New-Object System.Net.Sockets.Socket $saddrf, $stype, $ptype 
+        $sock.TTL = 26 
+
+        # Connect to socket 
+        $sock.Connect($end) 
+
+        # Create encoded buffer 
+        $Enc     = [System.Text.Encoding]::ASCII 
+        $Buffer  = $Enc.GetBytes($message)
+
+        # Send the buffer 
+        $Sent   = $sock.Send($Buffer) 
+        $sock.Close()
+        $now = Get-Date -Format HH:mm:ss.fff
+        Add-Content -Path $log -Value "$now : [+] $feature string $message sent ( $Sent bytes) to $remotehost : $port" -PassThru
+} catch {
+        "oops"
+        $ErrorMessage = $_.Exception.Message
+        $FailedItem = $_.Exception.ItemName
+        Write-Host $ErrorMessage "///" $FailedItem
+        Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
+        $now = Get-Date -Format HH:mm:ss.fff
+        Add-Content -Path $log -Value "$now : [-] $feature error udp-sending to $remotehost : $port result: $Error" -PassThru
     }
 }
 
@@ -417,14 +460,15 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     # reading RDS config
     $port = $h.Get_Item("RDSPORT")
     $remoteHost = $h.Get_Item("RDSIP")
+    $rdsporttype = $h.Get_Item("RDSPORTTYPE")
     $rdssite = $h.Get_Item("RDSSITE")
-    $rdshone = $h.Get_Item("RDSPHONE")
+    $rdscommercial = $h.Get_Item("RDSCOMMERCIAL")
     $feature = "RDS"
     Write-Host
     Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host
     if ($type -eq '1') {
-        $message = 'TEXT=www.emg.fm ** Commercial: '+$rdshone
+        $message = 'TEXT= '+$rdscommercial
         [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
         # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
@@ -454,7 +498,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     $messagejoint = $message + "`n" + $rtplus + "`n"
     
     # is NOWPLAYING TYPE different?
-    if ($samenowplaying -eq $true) {
+    if ( ($samenowplaying -eq $true) -and ($force -eq $false) ) {
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
@@ -467,7 +511,11 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         #Break
     } else {
         # NOWPLAYING TYPE is different
-        New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+        if ($rdsporttype -eq "UDP") {
+            New-UDPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+        } else {
+            New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+        }
         # updating original $coOutFile
         Copy-Item -Path $csOutFile -Destination $coOutFile -Force -Recurse
         #Remove-Item -Path $dest.FullName
@@ -598,8 +646,9 @@ XMLF=\\server\share\EP-MSK.xml
 [RDS]
 RDSIP=127.0.0.1
 RDSPORT=1024
+RDSPORTTYPE=UDP
 RDSSITE=www.europaplus.ru
-RDSPHONE=+7(495)6204664
+RDSCOMMERCIAL=+7(495)6204664
 
 [JSON]
 JSONSERVER=http://127.0.0.1/post.php

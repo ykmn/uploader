@@ -1,5 +1,5 @@
 [Actions]
-# set TRUE to enable action or FALSE to disable
+# Set TRUE to enable action or FALSE to disable
 JSON=TRUE
 FTP1=TRUE
 FTP2=FALSE
@@ -18,9 +18,11 @@ RTITLEID=17
 
 [RDS]
 RDSIP=127.0.0.1
-RDSPORT=1024
+RDSPORT=5001
+# Set RDS Connection port type: TCP or UDP
+RDSPORTTYPE=UDP
 RDSSITE=www.retrofm.ru
-RDSPHONE=+7(495)6204664
+RDSCOMMERCIAL=+7(495)6204664
 
 [JSON]
 JSONSERVER=http://127.0.0.1/post.php

@@ -2,3 +2,6 @@
 *.ini
 *.tmp
 *.bak
+jsons/*.*
+log/*.*
+tmp/*.*
