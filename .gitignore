@@ -2,6 +2,7 @@
 *.ini
 *.tmp
 *.bak
+*.xml
 jsons/*.*
 log/*.*
 tmp/*.*

@@ -5,16 +5,16 @@ param (
 )
 
 # if $debug set to $true then temporary xmls and jsons will not be removed
-# if $force set to $true then we didn't compare jsons and forcing push to webserver
+# if $force set to $true then we didn't compare jsons and forcing push to webserver and RDS
 $debug = $false
 $force = $false
 
-Clear-Host
+#Clear-Host
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 [string]$currentdir = Get-Location
 
 #####################################################################################
-Write-Host "Uploader 2.07.011 <r.ermakov@emg.fm> 2018-03-06"
+Write-Host "Uploader 2.07.012 <r.ermakov@emg.fm> 2018-07-12"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -193,15 +193,16 @@ $ReplacementTable = @{
 'Edit_' = '';
 '_' = ' ';
 'Dj ' = 'DJ ';
-'Ft.' = 'feat.';
+' Ft.' = ' feat.';
 'Feat.' = 'feat.';
 'Ajr' = 'AJR';
 'Lp' = 'LP';
 'Abba' = 'ABBA';
-'Modjo' = 'Modjo';
+'MoDjo' = 'Modjo';
 'Jp' = 'JP';
 'Mccartney' = 'McCartney';
 'Onerepublic' = 'OneRepublic';
+' Vs' = ' vs.'
 '  ' = ' '
 };
     
@@ -230,13 +231,17 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
     [int]$el = [convert]::ToInt32($b, 10)
     
     $artist = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Artist
+
     # if ; in Artist then artist should be inside name
+<#
     if (Select-String -pattern ";" -InputObject $artist) {
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : Artist $artist contains ';' - artist will be disabled."
         Write-Host "Artist $artist contains ';' - artist will be disabled." -ForegroundColor Yellow
         $artist=""
     }
+#>
+
     $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
     # Searching for Russian Artist/Title
     # !!! CHECK FOR CORRECT ID IN UserAttribs SECTION IN XML
@@ -284,8 +289,8 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
         
     ForEach ($i in $ReplacementTable.Keys) {
         # if variable defined
-            if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
-            if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
+            if ($artist) { $artist = $artist.replace($i, $ReplacementTable[$i]) }
+            if ($title) { $title = $title.replace($i, $ReplacementTable[$i]) }
     }
     
 
@@ -341,12 +346,14 @@ $stream.Add("songs",@(@($songs) | Sort-Object -Unique ELEM))
 $type = $xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'
 $artist = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Artist
 # if ; in Artist then artist should be inside name
-<# if (Select-String -pattern ";" -InputObject $artist) {
+<#
+if (Select-String -pattern ";" -InputObject $artist) {
     $now = Get-Date -Format HH:mm:ss.fff
     Add-Content -Path $log -Value "$now : Artist $artist contains ';' - artist will be disabled."
     Write-Host "Artist $artist contains ';' - artist will be disabled." -ForegroundColor Yellow
     $artist=""
-} #>
+}
+#>
 $title = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Name
 
 # culture and replacements for A/T
@@ -582,7 +589,7 @@ if ( `
     New-FTPUpload2 -ftp $ftp -user $user -pass $pass -xmlf $xmlf -remotepath $remotepath -feature $feature 
 }
 
-# Uploading XML to sedond FTP server
+# Uploading XML to second FTP server
 if ( `
         ($h.Get_Item("FTP2") -eq "TRUE") `
         -and (Get-Module -ListAvailable -Name WinSCP) `
