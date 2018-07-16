@@ -202,7 +202,8 @@ $ReplacementTable = @{
 'Jp' = 'JP';
 'Mccartney' = 'McCartney';
 'Onerepublic' = 'OneRepublic';
-' Vs' = ' vs.'
+' Vs' = ' vs.';
+'Sos ' = 'SOS ';
 '  ' = ' '
 };
     
