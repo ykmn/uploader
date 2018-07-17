@@ -14,7 +14,7 @@ $force = $false
 [string]$currentdir = Get-Location
 
 #####################################################################################
-Write-Host "Uploader 2.07.012 <r.ermakov@emg.fm> 2018-07-12"
+Write-Host "Uploader 2.07.013 <r.ermakov@emg.fm> 2018-07-17"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -95,27 +95,27 @@ param ($feature, $remoteHost, $port, $message)
     $Error.Clear()
     try { 
         #[int] $Port = 20000
-        $Address = [system.net.IPAddress]::Parse($remoteHost) 
-        
-        # Create IP Endpoint 
-        $End = New-Object System.Net.IPEndPoint $address, $port 
-        
-        # Create Socket 
-        $saddrf   = [System.Net.Sockets.AddressFamily]::InterNetwork 
-        $stype    = [System.Net.Sockets.SocketType]::Dgram 
-        $ptype    = [System.Net.Sockets.ProtocolType]::UDP 
-        $sock     = New-Object System.Net.Sockets.Socket $saddrf, $stype, $ptype 
-        $sock.TTL = 26 
+        $Address = [system.net.IPAddress]::Parse($remoteHost)
 
-        # Connect to socket 
-        $sock.Connect($end) 
+        # Create IP Endpoint
+        $End = New-Object System.Net.IPEndPoint $address, $port
 
-        # Create encoded buffer 
-        $Enc     = [System.Text.Encoding]::ASCII 
+        # Create Socket
+        $saddrf   = [System.Net.Sockets.AddressFamily]::InterNetwork
+        $stype    = [System.Net.Sockets.SocketType]::Dgram
+        $ptype    = [System.Net.Sockets.ProtocolType]::UDP
+        $sock     = New-Object System.Net.Sockets.Socket $saddrf, $stype, $ptype
+        $sock.TTL = 26
+
+        # Connect to socket
+        $sock.Connect($end)
+
+        # Create encoded buffer
+        $Enc     = [System.Text.Encoding]::ASCII
         $Buffer  = $Enc.GetBytes($message)
 
-        # Send the buffer 
-        $Sent   = $sock.Send($Buffer) 
+        # Send the buffer
+        $Sent   = $sock.Send($Buffer)
         $sock.Close()
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [+] $feature string $message sent ( $Sent bytes) to $remotehost : $port" -PassThru
@@ -160,7 +160,7 @@ if (!(Test-Path $currentdir"\tmp")) {
 if (!(Test-Path $currentdir"\jsons")) {
     New-Item -Path $currentdir"\jsons" -Force -ItemType Directory | Out-Null
 }
-$log = $currentdir + "\Log\" + $today + "-" + $cfg + ".log" 
+$log = $currentdir + "\Log\" + $today + "-" + $cfg + ".log"
 $scriptstart = Get-Date -Format yyyyMMdd-HHmmss-fff
 $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : ** Script $scriptstart Started"
@@ -204,16 +204,17 @@ $ReplacementTable = @{
 'Onerepublic' = 'OneRepublic';
 ' Vs' = ' vs.';
 'Sos ' = 'SOS ';
+'Dcne' = 'DCNE';
 '  ' = ' '
 };
-    
 
-# creating array
+
+# creating songs array
 $stream = @{stream = $cfg}
 [array]$songs = @();
 
 <# required json format:
-{ "stream":  "test-rr.cfg",
+{ "stream":  "myradio.cfg",
   "songs":  [
 	{ "artist":  "Arilena Ara", "runtime":  149, "dbID":  "151597", "ELEM":  0, "title":  "Nentori (Beverly Pills Remix)", "starttime":  1500984064 },
 	{ "artist":  "Nickelback", "runtime":  197, "dbID":  "1274", "ELEM":  2, "title":  "If Everyone Cared", "starttime":  1500984223 },
@@ -221,16 +222,16 @@ $stream = @{stream = $cfg}
   ]
 }    #>
 
-# filling the array of next-up songs
-ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Type.'#text' -eq '3'} ) {
+# filling the array of next-up songs (Type=3)
+ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Type.'#text' -eq '3'} ) {
 
     $type = $elem.Elem.FONO_INFO.Type.'#text'
     $dbid = $elem.Elem.FONO_INFO.dbID.'#text'
     # splitting ELEM_0 into ELEM and 0
-    # converting 0 from string to integer for latest sorting
     $a,$b = $elem.LocalName.split('_')
+    # converting 0 from string to integer for latest sorting
     [int]$el = [convert]::ToInt32($b, 10)
-    
+
     $artist = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Artist
 
     # if ; in Artist then artist should be inside name
@@ -246,6 +247,7 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
     $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
     # Searching for Russian Artist/Title
     # !!! CHECK FOR CORRECT ID IN UserAttribs SECTION IN XML
+    # AND SET THESE VALUES IN .cfg
     # <UserAttribs>
     #    <ELEM><ID dt="i4">7</ID>
     #          <Name>Русский исполнитель</Name><Value>Алла Пугачева</Value></ELEM>
@@ -270,38 +272,35 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
             $rtitle = $userattr.Value
             Write-Host $rtitle -BackgroundColor DarkCyan
             $title = $rtitle
-        }   
+        }
     }
-
-
-    [int]$starttime = $elem.Elem.StartTime.'#text'
-    [int]$runtime = [math]::Floor([decimal]$elem.Elem.Runtime.'#text' / 1000)
-    Write-Host "Element" $el ":" $artist "-" $title
-
     # culture and replacements for A/T
     if ($artist -ne $null) {
         $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower())
         $artist = $artist.Trim()
     } else { $artist = "" }
-    if ($title -ne $null) { 
+    if ($title -ne $null) {
         $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower())
         $title = $title.Trim()
     } else { $title = "" }
-        
     ForEach ($i in $ReplacementTable.Keys) {
         # if variable defined
             if ($artist) { $artist = $artist.replace($i, $ReplacementTable[$i]) }
             if ($title) { $title = $title.replace($i, $ReplacementTable[$i]) }
     }
-    
 
 
-    $utoday = Get-Date -Format dd/MM/yyyy | Get-Date -UFormat %s
-    [int]$ustarttime = [int][double]$utoday + [int](([int][double]$starttime) / 1000) -10800
-    # starttime = value in milliseconds from 0:00 today
+    # getting time and converting to Unix Time
+    # starttime = XML value in milliseconds from 0:00 today
     # $ustarttime = value in seconds from 1.01.1970 0:00
     # -10800 = corrects UTC +3 in seconds
-    
+    [int]$starttime = $elem.Elem.StartTime.'#text'
+    [int]$runtime = [math]::Floor([decimal]$elem.Elem.Runtime.'#text' / 1000)
+    $utoday = Get-Date -Format dd/MM/yyyy | Get-Date -UFormat %s
+    [int]$ustarttime = [int][double]$utoday + [int](([int][double]$starttime) / 1000) -10800
+
+    Write-Host "Element" $el ":" $artist "-" $title
+
     Write-Host "Convert to:" $type"/"$dbid"/"$artist"/"$title"["$ustarttime"]"$runtime
     Write-Host
 
@@ -316,7 +315,7 @@ ForEach ($elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Typ
     $currentobj = New-Object PSObject -Property $current
     [array]$songs += $currentobj
 }
-   
+
 # show what we got in array
 @($songs) | Sort-Object -Unique ELEM | Format-Table
 
@@ -343,6 +342,10 @@ if ((Test-Path $oOutFile) -eq $false) {
 $stream.Add("songs",@(@($songs) | Sort-Object -Unique ELEM))
 
 
+##############################
+# CURRENT
+##############################
+
 # getting current A/T
 $type = $xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'
 $artist = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Artist
@@ -366,24 +369,42 @@ if ($title -ne $null) {
     $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower())
     $title = $title.Trim()
 } else { $title = "" }
-        
+
 ForEach ($i in $ReplacementTable.Keys) {
     # if variable defined
         if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
         if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
 }
-    
 
-# now we have $artist $title $type of "now playing" ELEM_0
+
+# Now we have $artist $title $type of "now playing" ELEM_0
 Write-Host "Now"$xmlfile.root.ELEM_0.Status":" -BackgroundColor DarkYellow -ForegroundColor Blue
 Write-Host $type"/ "$artist "-" $title
 $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : Now playing: $type/ $artist - $title"
 
 
+# Reading RDS section from current element
+if ($xmlfile.root.ELEM_0.Elem.Rds -ne $null) {
+    $rdspsforced = $xmlfile.root.ELEM_0.Elem.Rds.split("|")
+    Write-Host "Found Elem/RDS:   " $rdspsforced
+    $rdspsforced | ForEach-Object -begin { $j=@{} } -process {
+        $m = [regex]::split($_,'=');
+        if ($m[0].CompareTo("") -ne 0) {
+            $j.Add($m[0], $m[1])
+        }
+    }
+    $rdspsforced = $j.Get_Item("PT")
+    Write-Host "Forced PS string: " $rdspsforced
+    Add-Content -Path $log -Value "$now : Forced PS string: $rdspsforced"
+} else {
+    Write-Host "Forced RDS string is not found."
+}
 
 
-
+##############################
+# JSON
+##############################
 
 
 # if current element is a song and playing and dbid is not null
@@ -398,7 +419,6 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
     $now = Get-Date -Format HH:mm:ss.fff
     Add-Content -Path $log -Value "$now : JSON saved to $sOutFile."
 
-    
     # compare current .json and last .json
     if ( ((Compare-Object $(Get-Content $sOutFile) $(Get-Content $oOutFile) ) -eq $null) -and ($force -ne $true) ) {
         Write-Host "Previous and current JSONs are same" -ForegroundColor Yellow
@@ -415,8 +435,6 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
         if (!$debug) { Remove-Item -Path $sOutFile }
     }
 
-
-
     #pushing json to hosting
     if ($h.Get_Item("JSON") -eq "TRUE") {
         Write-Host
@@ -425,7 +443,7 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
         $json
         # converting to UTF-8
         $json = [System.Text.Encoding]::UTF8.GetBytes($json)
-        
+
         $Error.Clear()
         try { 
 #            Invoke-Command -ScriptBlock {Invoke-WebRequest -Uri $jsonserver -Method POST -Body $json -ContentType "application/json"} -AsJob
@@ -447,6 +465,12 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
         Add-Content -Path $log -Value "$now : JSON push didn't engaged. Element: $($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'), Status: $($xmlfile.root.ELEM_0.Status), JSON=$($h.Get_Item('JSON'))"
     }
 }
+
+
+##############################
+# RDS
+##############################
+
 
 # Sending current song to RDS
 if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
@@ -471,28 +495,39 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     $rdsporttype = $h.Get_Item("RDSPORTTYPE")
     $rdssite = $h.Get_Item("RDSSITE")
     $rdscommercial = $h.Get_Item("RDSCOMMERCIAL")
+    if ( ($h.Get_Item("RDSDEVICE") -eq "8700i") -or ($h.Get_Item("RDSDEVICE") -eq "SmartGen") ) {
+        $rdsdevice = $h.Get_Item("RDSDEVICE")
+    }
     $feature = "RDS"
+
+
     Write-Host
     Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host
+    # COMMERCIAL
     if ($type -eq '1') {
-        $message = 'TEXT= '+$rdscommercial
+        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT= '+$rdscommercial }
+        if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdscommercial }
         [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
         # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     }
+    # JINGLE
     if ($type -eq '2') {
-        $message = 'TEXT='+$rdssite
+        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT= '+$rdssite }
+        if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdssite }
         [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
         # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     }
+    # MUSIC
     if ($type -eq '3') { 
-        $message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite 
+        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite }
+        if ($rdsdevice -eq "8700i") { $message = 'RT='+$artist+' - '+$title+' ** '+$rdssite }
         [int]$alenght = $artist.Length
         [int]$tlenght = $title.Length
         [int]$tstart = $alenght+3
@@ -503,8 +538,9 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     }
     Write-Host "$feature Message:" $message -BackgroundColor DarkYellow -ForegroundColor Blue
     Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkYellow -ForegroundColor Blue
-    $messagejoint = $message + "`n" + $rtplus + "`n"
-    
+    if ($rdsdevice -eq "SmartGen") { $messagejoint = $message + "`n" + $rtplus + "`n" }
+    if ($rdsdevice -eq "8700i") { $messagejoint = $message + "`n" }
+
     # is NOWPLAYING TYPE different?
     if ( ($samenowplaying -eq $true) -and ($force -eq $false) ) {
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
@@ -520,10 +556,37 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     } else {
         # NOWPLAYING TYPE is different
         if ($rdsporttype -eq "UDP") {
+            # Sending RT/RT+
             New-UDPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+            # Sending forced PS if detected if DEVA SmartGen
+            if (($rdspsforced -ne $null) -and ($rdsdevice -eq "SmartGen") ) {
+                Write-Host
+                Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Blue
+                $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
+                if (Test-Path $rdsfile -eq $true) {
+                    Write-Host "Sending $rdsfile to $remotehost :$port"
+                    $messagejoint = Get-Content -Path $rdsfile
+                    New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+                }
+            }
         } else {
+            # Sending RT/RT+
             New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+            # Sending forced PS if detected
+            if ($rdspsforced -ne $null) {
+                Write-Host
+                Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Blue
+                $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
+                if (Test-Path $rdsfile -eq $true) {
+                    Write-Host "Sending $rdsfile to $remotehost :$port"
+                    if ($rdsdevice -eq "8700i") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
+                    if ($rdsdevice -eq "SmartGen") { $messagejoint = Get-Content -Path $rdsfile }
+                    Write-Host "Message: $messagejoint"
+                    New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+                }
+            }
         }
+
         # updating original $coOutFile
         Copy-Item -Path $csOutFile -Destination $coOutFile -Force -Recurse
         #Remove-Item -Path $dest.FullName
@@ -531,6 +594,10 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     }
 }
 
+
+##############################
+# PROSTERAM
+##############################
 
 
 # Sending current song to PROSTEAM
@@ -572,6 +639,11 @@ if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
 }
 
 
+##############################
+# FTP
+##############################
+
+
 # Uploading XML to first FTP server
 if ( `
         ($h.Get_Item("FTP1") -eq "TRUE") `
@@ -587,7 +659,7 @@ if ( `
     $feature = "FTP1"
     $xmlf = Get-ChildItem -Path $h.Get_Item("XMLF")
     $remotefile = $ftp+"/"+$xmlf.Name
-    New-FTPUpload2 -ftp $ftp -user $user -pass $pass -xmlf $xmlf -remotepath $remotepath -feature $feature 
+    New-FTPUpload2 -ftp $ftp -user $user -pass $pass -xmlf $xmlf -remotepath $remotepath -feature $feature
 }
 
 # Uploading XML to second FTP server
@@ -605,10 +677,14 @@ if ( `
     $feature = "FTP2"
     $xmlf = Get-ChildItem -Path $h.Get_Item("XMLF")
     $remotefile = $ftp+"/"+$xmlf.Name
-    New-FTPUpload2 -ftp $ftp -user $user -pass $pass -xmlf $xmlf -remotepath $remotepath -feature $feature 
+    New-FTPUpload2 -ftp $ftp -user $user -pass $pass -xmlf $xmlf -remotepath $remotepath -feature $feature
 }
 
 
+
+##############################
+# PURGE
+##############################
 
 
 # cleaning up
@@ -633,9 +709,9 @@ v2.03 2017-03-24 changing host probe from ping to Microsoft PortQuery
 v2.04 2017-03-29 more cleanup for Camel Case; settings are now in external config file!
 v2.05 2017-05-25 extracting A/T and other values to .json; pushing JSON to HTTP and uploading to FTP only if current type is music;
 v2.06 2017-06-06 checking for another instance of script, added "fun with flags".
-v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.txt
+v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.md
 
-Usage: uploader.ps1 config.cfg
+Usage: uploader2.ps1 config.cfg
 
 Config file example:
 
@@ -654,12 +730,19 @@ XMLF=\\server\share\EP-MSK.xml
 [RDS]
 RDSIP=127.0.0.1
 RDSPORT=1024
+#RDSPORTTYPE=TCP
 RDSPORTTYPE=UDP
 RDSSITE=www.europaplus.ru
 RDSCOMMERCIAL=+7(495)6204664
+#RDSDEVICE=8700i
+RDSDEVICE=SmartGen
 
 [JSON]
 JSONSERVER=http://127.0.0.1/post.php
+
+[ID]
+rartistid=7
+rtitleid=17
 
 [FTP1]
 FTPSERVER1=127.0.0.1:30021
