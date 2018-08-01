@@ -3,6 +3,7 @@
 *.tmp
 *.bak
 *.xml
+*.log
 jsons/*.*
 log/*.*
 tmp/*.*

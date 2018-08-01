@@ -4,6 +4,11 @@ param (
     [Parameter(Mandatory=$true)][string]$cfg 
 )
 
+#####################################################################################
+Write-Host "Uploader 2.07.013a <r.ermakov@emg.fm> 2018-08-01"
+Write-Host "Now on Microsoft Powershell. Making metadata great again."
+Write-Host
+
 # if $debug set to $true then temporary xmls and jsons will not be removed
 # if $force set to $true then we didn't compare jsons and forcing push to webserver and RDS
 $debug = $false
@@ -13,10 +18,6 @@ $force = $false
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 [string]$currentdir = Get-Location
 
-#####################################################################################
-Write-Host "Uploader 2.07.013 <r.ermakov@emg.fm> 2018-07-17"
-Write-Host "Now on Microsoft Powershell. Making metadata great again."
-Write-Host
 
 function New-FTPUpload2  {
 param ($ftp, $user, $pass, $xmlf, $remotepath, $feature)
@@ -146,7 +147,7 @@ Write-Host "Using configuration from $cfg"
 Write-Host
 
 if ((Test-Path ".\curl.exe") -eq $false) {
-    Write-Host "CURL.EXE is not found in current folder. If you need to use FTP upload, please download CURL.EXE at http://curl.haxx.se/download.html" -ForegroundColor Red
+    Write-Host "CURL.EXE is not found in current folder.`nIf you need to use FTP upload please download CURL.EXE at http://curl.haxx.se/download.html `n" -ForegroundColor Red
 }
 
 # Setup log files
@@ -495,6 +496,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     $rdsporttype = $h.Get_Item("RDSPORTTYPE")
     $rdssite = $h.Get_Item("RDSSITE")
     $rdscommercial = $h.Get_Item("RDSCOMMERCIAL")
+    $rdsnonmusic = $h.Get_Item("RDSNONMUSIC")
     if ( ($h.Get_Item("RDSDEVICE") -eq "8700i") -or ($h.Get_Item("RDSDEVICE") -eq "SmartGen") ) {
         $rdsdevice = $h.Get_Item("RDSDEVICE")
     }
@@ -506,26 +508,15 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     Write-Host
     # COMMERCIAL
     if ($type -eq '1') {
-        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT= '+$rdscommercial }
+        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$rdscommercial }
         if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdscommercial }
         [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
         # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
-    }
-    # JINGLE
-    if ($type -eq '2') {
-        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT= '+$rdssite }
-        if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdssite }
-        [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
-        # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
-        Write-Host "Previous Now Playing Type:"
-        Get-Content $coOutFile
-        $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
-    }
+    } elseif ($type -eq '3') {
     # MUSIC
-    if ($type -eq '3') { 
         if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite }
         if ($rdsdevice -eq "8700i") { $message = 'RT='+$artist+' - '+$title+' ** '+$rdssite }
         [int]$alenght = $artist.Length
@@ -535,6 +526,15 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         [string]$rtplus = "RT+TAG=04,00,"+$alenght.ToString("00")+",01,"+$tstart.ToString("00")+","+$tlenght.ToString("00")+",1,1"
         $samenowplaying = $false
         # because same song is processed earlier
+    } else {
+    # JINGLE or PROGRAM or NEWS
+        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$rdsnonmusic+' ** '+$rdssite }
+        if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdsnonmusic+' ** '+$rdssite }
+        [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+        # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
+        Write-Host "Previous Now Playing Type:"
+        Get-Content $coOutFile
+        $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     }
     Write-Host "$feature Message:" $message -BackgroundColor DarkYellow -ForegroundColor Blue
     Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkYellow -ForegroundColor Blue
@@ -713,7 +713,7 @@ v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see
 
 Usage: uploader2.ps1 config.cfg
 
-Config file example:
+config.cfg example:
 
 [Actions]
 JSON=TRUE
@@ -724,18 +724,20 @@ PROSTREAM1=TRUE
 PROSTREAM2=TRUE
 
 [XML]
-XMLF=\\server\share\EP-MSK.xml
 # Using XML from Digispot II Value.Server with XML.Writer module
+XMLF=\\server\share\EP-MSK.xml
+#XMLF=C:\XML\uploader\EP-MSK2.xml
 
 [RDS]
+# Set RDS Device type: 8700i or SmartGen
+RDSDEVICE=8700i
 RDSIP=127.0.0.1
-RDSPORT=1024
-#RDSPORTTYPE=TCP
+RDSPORT=5001
+# Set RDS Connection port type: TCP or UDP
 RDSPORTTYPE=UDP
-RDSSITE=www.europaplus.ru
+RDSSITE=www.retrofm.ru
 RDSCOMMERCIAL=+7(495)6204664
-#RDSDEVICE=8700i
-RDSDEVICE=SmartGen
+RDSNONMUSIC=**
 
 [JSON]
 JSONSERVER=http://127.0.0.1/post.php
@@ -757,6 +759,7 @@ FTPPASS2=pass2
 FTPPATH2=/
 
 [PROSTREAM]
+# Using Omnia ProStream "Character Parser Sample" filter
 ZIPSERVER1=prostream-server1
 ZIPPORT1=6001
 ZIPSERVER2=prostream-server2
