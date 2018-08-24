@@ -1,3 +1,98 @@
+<#
+.NOTES
+    Copyright (c) Roman Ermakov <r.ermakov@emg.fm>
+    Use of this sample source code is subject to the terms of the
+    GNU General Public License under which you licensed this sample source code. If
+    you did not accept the terms of the license agreement, you are not
+    authorized to use this sample source code.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    THIS CODE IS PROVIDED "AS IS" WITH NO WARRANTIES.
+    
+.SYNOPSIS
+    Sends DJin.ValueServer metadata to some destinations
+    
+.DESCRIPTION
+    Upload DJin.ValueServer XML to FTP-server
+    Push DJin.ValueServer metadata to HTTP server
+    Push DJin.ValueServer Artist-Title to RDS encoder as RaioText and RadioText+
+    Push DJin.ValueServer Artist-Title to Omnia ProStream X/2
+
+.EXAMPLE
+    uploader2.ps1 config.cfg
+
+.PARAMETER cfg
+    Configuration file name.
+    config.cfg example:
+
+[Actions]
+JSON=TRUE
+FTP1=TRUE
+FTP2=FALSE
+RDS=TRUE
+PROSTREAM1=TRUE
+PROSTREAM2=TRUE
+
+[XML]
+# Using XML from Digispot II Value.Server with XML.Writer module
+XMLF=\\server\share\EP-MSK.xml
+#XMLF=C:\XML\uploader\EP-MSK2.xml
+
+[RDS]
+# Set RDS Device type: 8700i or SmartGen
+RDSDEVICE=8700i
+RDSIP=127.0.0.1
+RDSPORT=5001
+# Set RDS Connection port type: TCP or UDP
+RDSPORTTYPE=UDP
+RDSSITE=www.retrofm.ru
+RDSCOMMERCIAL=+7(495)6204664
+RDSNONMUSIC=**
+
+[JSON]
+JSONSERVER=http://127.0.0.1/post.php
+
+[ID]
+rartistid=7
+rtitleid=17
+
+[FTP1]
+FTPSERVER1=127.0.0.1:30021
+FTPUSER1=user1
+FTPPASS1=pass1
+FTPPATH1=/pub/uploads/Radio1/
+
+[FTP2]
+FTPSERVER2=127.0.0.1:21
+FTPUSER2=user2
+FTPPASS2=pass2
+FTPPATH2=/
+
+[PROSTREAM]
+# Using Omnia ProStream "Character Parser Sample" filter
+ZIPSERVER1=prostream-server1
+ZIPPORT1=6001
+ZIPSERVER2=prostream-server2
+ZIPPORT2=6001
+
+#>
+
+<#
+uploader.ps1
+
+v1.00 2015-10-09 sending xml to remote FTP sites.
+v1.01 2015-10-30 logging send results.
+v2.00 2016-01-14 implemented xml parsing.
+v2.01 2016-11-17 implemented evaluation element type (music/jingle/commercial); added sending to DEVA RDS-coder.
+v2.02 2016-11-18 Capitalizing Artist And Title; implemented RT+ field; added some checkups.
+v2.03 2017-03-24 changing host probe from ping to Microsoft PortQuery
+v2.04 2017-03-29 more cleanup for Camel Case; settings are now in external config file!
+v2.05 2017-05-25 extracting A/T and other values to .json; pushing JSON to HTTP and uploading to FTP only if current type is music;
+v2.06 2017-06-06 checking for another instance of script, added "fun with flags".
+v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.md
+
+#>
+
 # Handling command-line parameters
 param (
     #[string]$cfg = "d:\temp\uploader\test-rr.cfg"
@@ -698,71 +793,3 @@ if ($debug -ne $true ) {
 $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : [*] Script $scriptstart finished normally"
 Write-Host
-
-<#
-v1.00 2015-10-09 sending xml to remote FTP sites.
-v1.01 2015-10-30 logging send results.
-v2.00 2016-01-14 implemented xml parsing.
-v2.01 2016-11-17 implemented evaluation element type (music/jingle/commercial); added sending to DEVA RDS-coder.
-v2.02 2016-11-18 Capitalizing Artist And Title; implemented RT+ field; added some checkups.
-v2.03 2017-03-24 changing host probe from ping to Microsoft PortQuery
-v2.04 2017-03-29 more cleanup for Camel Case; settings are now in external config file!
-v2.05 2017-05-25 extracting A/T and other values to .json; pushing JSON to HTTP and uploading to FTP only if current type is music;
-v2.06 2017-06-06 checking for another instance of script, added "fun with flags".
-v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.md
-
-Usage: uploader2.ps1 config.cfg
-
-config.cfg example:
-
-[Actions]
-JSON=TRUE
-FTP1=TRUE
-FTP2=FALSE
-RDS=TRUE
-PROSTREAM1=TRUE
-PROSTREAM2=TRUE
-
-[XML]
-# Using XML from Digispot II Value.Server with XML.Writer module
-XMLF=\\server\share\EP-MSK.xml
-#XMLF=C:\XML\uploader\EP-MSK2.xml
-
-[RDS]
-# Set RDS Device type: 8700i or SmartGen
-RDSDEVICE=8700i
-RDSIP=127.0.0.1
-RDSPORT=5001
-# Set RDS Connection port type: TCP or UDP
-RDSPORTTYPE=UDP
-RDSSITE=www.retrofm.ru
-RDSCOMMERCIAL=+7(495)6204664
-RDSNONMUSIC=**
-
-[JSON]
-JSONSERVER=http://127.0.0.1/post.php
-
-[ID]
-rartistid=7
-rtitleid=17
-
-[FTP1]
-FTPSERVER1=127.0.0.1:30021
-FTPUSER1=user1
-FTPPASS1=pass1
-FTPPATH1=/pub/uploads/Radio1/
-
-[FTP2]
-FTPSERVER2=127.0.0.1:21
-FTPUSER2=user2
-FTPPASS2=pass2
-FTPPATH2=/
-
-[PROSTREAM]
-# Using Omnia ProStream "Character Parser Sample" filter
-ZIPSERVER1=prostream-server1
-ZIPPORT1=6001
-ZIPSERVER2=prostream-server2
-ZIPPORT2=6001
-
-#>
