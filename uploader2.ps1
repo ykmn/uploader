@@ -18,6 +18,9 @@
     Push DJin.ValueServer Artist-Title to RDS encoder as RaioText and RadioText+
     Push DJin.ValueServer Artist-Title to Omnia ProStream X/2
 
+.LINK
+    https://github.com/ykmn/uploader/blob/master/readme.md
+
 .EXAMPLE
     uploader2.ps1 config.cfg
 
