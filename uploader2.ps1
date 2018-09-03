@@ -50,7 +50,7 @@ RDSPORT=5001
 RDSPORTTYPE=UDP
 RDSSITE=www.retrofm.ru
 RDSCOMMERCIAL=+7(495)6204664
-RDSNONMUSIC=**
+RDSNONMUSIC=Retro FM
 
 [JSON]
 JSONSERVER=http://127.0.0.1/post.php
@@ -103,7 +103,7 @@ param (
 )
 
 #####################################################################################
-Write-Host "Uploader 2.07.013a <r.ermakov@emg.fm> 2018-08-01"
+Write-Host "Uploader 2.07.014 <r.ermakov@emg.fm> 2018-09-03"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -244,9 +244,9 @@ Write-Host "Current folder:" $currentdir
 Write-Host "Using configuration from $cfg"
 Write-Host
 
-if ((Test-Path ".\curl.exe") -eq $false) {
-    Write-Host "CURL.EXE is not found in current folder.`nIf you need to use FTP upload please download CURL.EXE at http://curl.haxx.se/download.html `n" -ForegroundColor Red
-}
+# if ((Test-Path ".\curl.exe") -eq $false) {
+#     Write-Host "CURL.EXE is not found in current folder.`nIf you need to use FTP upload please download CURL.EXE at http://curl.haxx.se/download.html `n" -ForegroundColor Red
+# }
 
 # Setup log files
 $today = Get-Date -Format yyyy-MM-dd
@@ -494,10 +494,11 @@ if ($xmlfile.root.ELEM_0.Elem.Rds -ne $null) {
         }
     }
     $rdspsforced = $j.Get_Item("PT")
-    Write-Host "Forced PS string: " $rdspsforced
+    Write-Host "Forced PS string found: " $rdspsforced
     Add-Content -Path $log -Value "$now : Forced PS string: $rdspsforced"
 } else {
     Write-Host "Forced RDS string is not found."
+    $rdspsforced = $null
 }
 
 
@@ -604,85 +605,103 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     Write-Host
     Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host
-    # COMMERCIAL
+    
+    # Compiling RT/RT+ strings for different element types
     if ($type -eq '1') {
-        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$rdscommercial }
-        if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdscommercial }
-        [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+    # COMMERCIAL
+        if ($rdsdevice -eq "SmartGen") {
+            $message = 'TEXT='+$rdscommercial +' ** '+$rdssite
+            [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+        }
+        if ($rdsdevice -eq "8700i") {
+            $message = 'RT='+$rdscommercial +' ** '+$rdssite
+            [string]$rtplus = ""
+        }
+        
         # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     } elseif ($type -eq '3') {
     # MUSIC
-        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite }
-        if ($rdsdevice -eq "8700i") { $message = 'RT='+$artist+' - '+$title+' ** '+$rdssite }
         [int]$alenght = $artist.Length
         [int]$tlenght = $title.Length
-        [int]$tstart = $alenght+3
-        # 3 is because ' - ' between artist and title in $message RT string
-        [string]$rtplus = "RT+TAG=04,00,"+$alenght.ToString("00")+",01,"+$tstart.ToString("00")+","+$tlenght.ToString("00")+",1,1"
+        [int]$tstart = $alenght+3           # 3 is because ' - ' between artist and title in $message RT string
+        if ($rdsdevice -eq "SmartGen") {
+            $message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite 
+            [string]$rtplus = "RT+TAG=04,00,"+$alenght.ToString("00")+",01,"+$tstart.ToString("00")+","+$tlenght.ToString("00")+",1,1"
+        }
+        if ($rdsdevice -eq "8700i") {
+            $message = 'RT='+$artist+' - '+$title+' ** '+$rdssite
+            [string]$rtplus = ""
+        }
+        
         $samenowplaying = $false
         # because same song is processed earlier
     } else {
     # JINGLE or PROGRAM or NEWS
-        if ($rdsdevice -eq "SmartGen") { $message = 'TEXT='+$rdsnonmusic+' ** '+$rdssite }
-        if ($rdsdevice -eq "8700i") { $message = 'RT='+$rdsnonmusic+' ** '+$rdssite }
-        [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+        if ($rdsdevice -eq "SmartGen") {
+            $message = 'TEXT='+$rdsnonmusic+' ** '+$rdssite
+            [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+        }
+        if ($rdsdevice -eq "8700i") {
+            $message = 'RT='+$rdsnonmusic+' ** '+$rdssite
+            [string]$rtplus = ""
+        }
+        
         # compare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     }
-    Write-Host "$feature Message:" $message -BackgroundColor DarkYellow -ForegroundColor Blue
+    Write-Host "$feature RT  Message:" $message -BackgroundColor DarkYellow -ForegroundColor Blue
     Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkYellow -ForegroundColor Blue
     if ($rdsdevice -eq "SmartGen") { $messagejoint = $message + "`n" + $rtplus + "`n" }
     if ($rdsdevice -eq "8700i") { $messagejoint = $message + "`n" }
 
+    # Updating PS
+    # Sending forced PS if detected if DEVA SmartGen
+    if ($rdspsforced -ne $null)  {
+        Write-Host
+        Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Red
+        Add-Content -Path $log -Value "$now : Detected forced RDS PS: $rdspsforced"
+        $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
+        Write-Host "Looking for $rdsfile"
+        Add-Content -Path $log -Value "$now : Looking for $rdsfile"
+        if (Test-Path $rdsfile) {
+            Write-Host "Sending $rdsfile to $remotehost :$port"
+            Add-Content -Path $log -Value "$now : Sending $rdsfile to $remotehost :$port"                
+            if ($rdsdevice -eq "8700i") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
+            if ($rdsdevice -eq "SmartGen") { $messagejoint = Get-Content -Path $rdsfile }
+            Write-Host " [+] Sending RDS PS String: $messagejoint"
+            Add-Content -Path $log -Value "$now : [+] Sending RDS PS string: $messagejoint"
+            New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
+        } else {
+            Write-Host "Forced RDS PS $rdspsforced detected but $rdsfile not found."
+            Add-Content -Path $log -Value "$now : Forced RDS PS $rdspsforced detected but $rdsfile not found."
+        }
+    }
+    
     # is NOWPLAYING TYPE different?
     if ( ($samenowplaying -eq $true) -and ($force -eq $false) ) {
+        # No, NOWPLAYING TYPE is the same, don't update RT
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
-        #$dest.FullName
-        $now = Get-Date -Format HH:mm:ss.fff
         Add-Content -Path $log -Value "$now : [*] Script $scriptstart breaks"
         # deleting current NOWPLAYING
         #if (Test-Path $dest) { Remove-Item -Path $dest.FullName }
         #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
         #Break
     } else {
-        # NOWPLAYING TYPE is different
+    # NOWPLAYING TYPE is different
         if ($rdsporttype -eq "UDP") {
             # Sending RT/RT+
             New-UDPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
-            # Sending forced PS if detected if DEVA SmartGen
-            if (($rdspsforced -ne $null) -and ($rdsdevice -eq "SmartGen") ) {
-                Write-Host
-                Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Blue
-                $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
-                if (Test-Path $rdsfile -eq $true) {
-                    Write-Host "Sending $rdsfile to $remotehost :$port"
-                    $messagejoint = Get-Content -Path $rdsfile
-                    New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
-                }
-            }
         } else {
             # Sending RT/RT+
             New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
             # Sending forced PS if detected
-            if ($rdspsforced -ne $null) {
-                Write-Host
-                Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Blue
-                $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
-                if (Test-Path $rdsfile -eq $true) {
-                    Write-Host "Sending $rdsfile to $remotehost :$port"
-                    if ($rdsdevice -eq "8700i") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
-                    if ($rdsdevice -eq "SmartGen") { $messagejoint = Get-Content -Path $rdsfile }
-                    Write-Host "Message: $messagejoint"
-                    New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
-                }
-            }
         }
 
         # updating original $coOutFile
