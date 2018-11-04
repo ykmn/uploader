@@ -112,6 +112,11 @@ Write-Host
 $debug = $false
 $force = $false
 
+if ($PSVersionTable.PSVersion.Major -le 5) {
+    Write-Host "`n`nThis script wowrks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
+    Break
+}
+
 #Clear-Host
 [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 [string]$currentdir = Get-Location
