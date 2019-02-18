@@ -42,11 +42,11 @@ XMLF=\\server\share\EP-MSK.xml
 #XMLF=C:\XML\uploader\EP-MSK2.xml
 
 [RDS]
-# Set RDS Device type: 8700i or SmartGen
-RDSDEVICE=8700i
+# RDS-coder type: 8700i or SmartGen
+RDSDEVICE=SmartGen
 RDSIP=127.0.0.1
 RDSPORT=5001
-# Set RDS Connection port type: TCP or UDP
+# RDS Connection port type: TCP or UDP
 RDSPORTTYPE=UDP
 RDSSITE=www.retrofm.ru
 RDSCOMMERCIAL=+7(495)6204664
@@ -56,8 +56,10 @@ RDSNONMUSIC=Retro FM
 JSONSERVER=http://127.0.0.1/post.php
 
 [ID]
-rartistid=7
-rtitleid=17
+RARTISTID=7
+RTITLEID=17
+DEFAULTAT=en
+# If ru then script gets AT for RDS from UserAttribs above
 
 [FTP1]
 FTPSERVER1=127.0.0.1:30021
@@ -103,7 +105,7 @@ param (
 )
 
 #####################################################################################
-Write-Host "Uploader 2.07.014 <r.ermakov@emg.fm> 2018-09-03"
+Write-Host "Uploader 2.07.015 <r.ermakov@emg.fm> 2019-02-18 https://github.com/ykmn/uploader"
 Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
@@ -112,8 +114,8 @@ Write-Host
 $debug = $false
 $force = $false
 
-if ($PSVersionTable.PSVersion.Major -le 5) {
-    Write-Host "`n`nThis script wowrks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "`n`nThis script wowks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
     Break
 }
 
@@ -234,7 +236,7 @@ param ($feature, $remoteHost, $port, $message)
     }
 }
 
-# Reading settings
+# reading settings
 Get-Content $cfg | ForEach-Object -begin { $h=@{} } -process {
     $k = [regex]::split($_,'=');
     if (($k[0].CompareTo("") -ne 0) `
@@ -253,7 +255,7 @@ Write-Host
 #     Write-Host "CURL.EXE is not found in current folder.`nIf you need to use FTP upload please download CURL.EXE at http://curl.haxx.se/download.html `n" -ForegroundColor Red
 # }
 
-# Setup log files
+# setup log files
 $today = Get-Date -Format yyyy-MM-dd
 if (!(Test-Path $currentdir"\log")) {
     New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
@@ -270,7 +272,7 @@ $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : ** Script $scriptstart Started"
 
 
-# Creating copy of XML file for processing
+# creating copy of XML file for processing
 $xmlfile = $h.Get_Item("XMLF")
 $xmlf = Get-ChildItem -Path $xmlfile
 $dest = $currentdir + "\tmp\" + $xmlf.Name + "." + $scriptstart
@@ -279,7 +281,7 @@ Write-Host "to $dest..."
 Write-Host
 Copy-Item -Path $xmlf -Destination $dest -Force -Recurse
 Copy-Item -Path $xmlf -Destination $xmlf".bak" -Force -Recurse
-# Parsing songs and saving to json
+# parsing songs and saving to json
 $dest = Get-ChildItem -Path $dest
 Write-Host "Searching for songs in XML:" $dest.FullName
 Write-Host
@@ -287,7 +289,7 @@ Write-Host
 # reading XML
 [xml]$xmlfile = Get-Content $dest
 
-# Here goes replacement table
+# here goes replacement table
 $ReplacementTable = @{
 ';' = '/';
 'Pi ' = '';
@@ -313,10 +315,6 @@ $ReplacementTable = @{
 };
 
 
-# creating songs array
-$stream = @{stream = $cfg}
-[array]$songs = @();
-
 <# required json format:
 { "stream":  "myradio.cfg",
   "songs":  [
@@ -325,6 +323,10 @@ $stream = @{stream = $cfg}
 	{ "artist":  "Charlie Puth", "runtime":  203, "dbID":  "152322", "ELEM":  5, "title":  "Attention", "starttime":  1500984426 }
   ]
 }    #>
+
+# creating songs array for json
+$stream = @{stream = $cfg}
+[array]$songs = @();
 
 # filling the array of next-up songs (Type=3)
 ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Type.'#text' -eq '3'} ) {
@@ -337,7 +339,6 @@ ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Ty
     [int]$el = [convert]::ToInt32($b, 10)
 
     $artist = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Artist
-
     # if ; in Artist then artist should be inside name
 <#
     if (Select-String -pattern ";" -InputObject $artist) {
@@ -347,8 +348,8 @@ ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Ty
         $artist=""
     }
 #>
-
     $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
+
     # Searching for Russian Artist/Title
     # !!! CHECK FOR CORRECT ID IN UserAttribs SECTION IN XML
     # AND SET THESE VALUES IN .cfg
@@ -364,18 +365,28 @@ ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Ty
         # get UserAttribs Russian Artist and Title IDs from config
         $rartistid = $h.Get_Item("RARTISTID")
         $rtitleid = $h.Get_Item("RTITLEID")
+        $defaultat = $h.Get_Item("DEFAULTAT")
         # 
         if ($userattr.ID.'#text' -eq $rartistid) {
             # Russian artist
             $rartist = $userattr.Value
             Write-Host $rartist -BackgroundColor DarkCyan
-            $artist = $rartist
+            # Check if russian artist for RDS            
+            if ($defaultat -eq "en") { 
+                # $artist and $title is in english, set $rartist and $rtitle
+                Write-Host "Default AT is" $defaultat". Setting the alternative from UserAttribs."
+                $artist = $rartist
+            }
         }
         if ($userattr.ID.'#text' -eq $rtitleid) {
             # Russian title
             $rtitle = $userattr.Value
             Write-Host $rtitle -BackgroundColor DarkCyan
-            $title = $rtitle
+            if ($defaultat -eq "en") { 
+                # $artist and $title is in english, set $rartist and $rtitle
+                Write-Host "Default AT is" $defaultat". Setting the alternative from UserAttribs."
+                $title = $rtitle
+            }
         }
     }
     # culture and replacements for A/T
@@ -464,6 +475,28 @@ if (Select-String -pattern ";" -InputObject $artist) {
 #>
 $title = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Name
 
+ForEach ($userattr in $xmlfile.root.ELEM_0.Elem.UserAttribs.ChildNodes) {
+    Write-Host $userattr.Name -BackgroundColor Red
+    Write-Host $userattr.ID.'#text' -BackgroundColor DarkCyan
+    # get UserAttribs Russian Artist and Title IDs from config
+    $rartistid = $h.Get_Item("RARTISTID")
+    $rtitleid = $h.Get_Item("RTITLEID")
+    # 
+    if ($userattr.ID.'#text' -eq $rartistid) {
+        # Russian artist
+        $rartist = $userattr.Value
+        Write-Host $rartist -BackgroundColor DarkCyan
+        #$artist = $rartist
+    }
+    if ($userattr.ID.'#text' -eq $rtitleid) {
+        # Russian title
+        $rtitle = $userattr.Value
+        Write-Host $rtitle -BackgroundColor DarkCyan
+        #$title = $rtitle
+    }
+}
+
+
 # culture and replacements for A/T
 if ($artist -ne $null) {
     $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower())
@@ -473,17 +506,28 @@ if ($title -ne $null) {
     $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower())
     $title = $title.Trim()
 } else { $title = "" }
+if ($rartist -ne $null) {
+    $rartist = (Get-Culture).TextInfo.ToTitleCase($rartist.ToLower())
+    $rartist = $rartist.Trim()
+} else { $artist = "" }
+if ($rtitle -ne $null) { 
+    $rtitle = (Get-Culture).TextInfo.ToTitleCase($rtitle.ToLower())
+    $rtitle = $rtitle.Trim()
+} else { $rtitle = "" }
 
 ForEach ($i in $ReplacementTable.Keys) {
     # if variable defined
-        if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
-        if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
+        if ($artist) { $artist = $artist.Replace($i, $ReplacementTable[$i]) }
+        if ($title) { $title = $title.Replace($i, $ReplacementTable[$i]) }
+        if ($rartist) { $rartist = $rartist.replace($i, $ReplacementTable[$i]) }
+        if ($rtitle) { $rtitle = $rtitle.replace($i, $ReplacementTable[$i]) }
 }
 
 
 # Now we have $artist $title $type of "now playing" ELEM_0
-Write-Host "Now"$xmlfile.root.ELEM_0.Status":" -BackgroundColor DarkYellow -ForegroundColor Blue
-Write-Host $type"/ "$artist "-" $title
+Write-Host "`nNow"$xmlfile.root.ELEM_0.Status":`n" -BackgroundColor DarkGreen -ForegroundColor White
+Write-Host "MAIN:" $type"/ "$artist "-" $title -BackgroundColor DarkCyan
+Write-Host "USER:" $type"/ "$rartist "-" $rtitle -BackgroundColor DarkCyan
 $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : Now playing: $type/ $artist - $title"
 
@@ -591,6 +635,19 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     }
     $type | Out-File -FilePath $csOutFile
     $now = Get-Date -Format HH:mm:ss.fff
+
+# Check if russian artist for RDS
+    $rartistid = $h.Get_Item("RARTISTID")
+    $defaultat = $h.Get_Item("DEFAULTAT")
+
+    if ($defaultat -eq "ru") { 
+        # $artist and $title contains russian, $rartist and $rtitle contains english
+        Write-Host "Default AT is" $defaultat". Setting the alternative from UserAttribs."
+        $artist = $rartist
+        $title = $rtitle
+        Write-Host $type"/ "$artist "-" $title -BackgroundColor DarkCyan
+    }
+
     Add-Content -Path $log -Value "$now : NOWPLAYING: $type/ $artist - $title"
     Add-Content -Path $log -Value "$now : Temp NOWPLAYING file: $csOutFile "
 
@@ -659,8 +716,8 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     }
-    Write-Host "$feature RT  Message:" $message -BackgroundColor DarkYellow -ForegroundColor Blue
-    Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkYellow -ForegroundColor Blue
+    Write-Host "$feature RT  Message:" $message -BackgroundColor DarkCyan
+    Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkCyan
     if ($rdsdevice -eq "SmartGen") { $messagejoint = $message + "`n" + $rtplus + "`n" }
     if ($rdsdevice -eq "8700i") { $messagejoint = $message + "`n" }
 
@@ -668,7 +725,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     # Sending forced PS if detected if DEVA SmartGen
     if ($rdspsforced -ne $null)  {
         Write-Host
-        Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Red
+        Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkCyan
         Add-Content -Path $log -Value "$now : Detected forced RDS PS: $rdspsforced"
         $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
         Write-Host "Looking for $rdsfile"
@@ -688,7 +745,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     }
     
     # is NOWPLAYING TYPE different?
-    if ( ($samenowplaying -eq $true) -and ($force -eq $false) ) {
+    if ( ($samenowplaying -eq $true) -and ($force -ne $true) ) {
         # No, NOWPLAYING TYPE is the same, don't update RT
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
@@ -718,7 +775,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
 
 
 ##############################
-# PROSTERAM
+# PROSTREAM
 ##############################
 
 
@@ -742,7 +799,7 @@ if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
             Write-Host
             Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
             Write-Host
-            Write-Host "$feature Message:" -BackgroundColor DarkYellow -ForegroundColor Blue
+            Write-Host "$feature Message:" $message -BackgroundColor DarkCyan
             New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
             if ($h.Get_Item("PROSTREAM2") -eq "TRUE") {
                 $remoteHost = $h.Get_Item("ZIPSERVER2")
@@ -751,7 +808,7 @@ if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
                 Write-Host
                 Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
                 Write-Host
-                Write-Host "$feature Message:" -BackgroundColor DarkYellow -ForegroundColor Blue
+                Write-Host "$feature Message:" $message -BackgroundColor DarkCyan
                 New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
             }
             #Remove-Item -Path $csOutFile.FullName

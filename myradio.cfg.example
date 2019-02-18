@@ -15,13 +15,16 @@ XMLF=\\server\share\RR-MSK2.xml
 [ID]
 RARTISTID=7
 RTITLEID=17
+DEFAULTAT=en
+# if ru then get AT for RDS from UserAttribs above
+
 
 [RDS]
-# Set RDS Device type: 8700i or SmartGen
+# RDS-coder type: 8700i or SmartGen
 RDSDEVICE=8700i
 RDSIP=127.0.0.1
 RDSPORT=5001
-# Set RDS Connection port type: TCP or UDP
+# RDS Connection port type: TCP or UDP
 RDSPORTTYPE=TCP
 RDSSITE=www.retrofm.ru
 RDSCOMMERCIAL=+7(495)6204664
@@ -44,7 +47,7 @@ FTPPATH2=/
 
 [PROSTREAM]
 # Using Omnia ProStream "Character Parser Sample" filter
-ZIPSERVER1=prostream-server1
+ZIPSERVER1=127.0.0.1
 ZIPPORT1=6001
-ZIPSERVER2=prostream-server2
+ZIPSERVER2=127.0.0.1
 ZIPPORT2=6001
