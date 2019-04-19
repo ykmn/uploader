@@ -22,7 +22,10 @@
     https://github.com/ykmn/uploader/blob/master/readme.md
 
 .EXAMPLE
-    uploader2.ps1 config.cfg
+    uploader2.ps1 config.cfg -force
+
+.PARAMETER force
+    Force upload operations even if the data is the same.
 
 .PARAMETER cfg
     Configuration file name.
@@ -99,8 +102,10 @@ v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see
 # Handling command-line parameters
 param (
     #[string]$cfg = "d:\temp\uploader\test-rr.cfg"
-    [Parameter(Mandatory=$true)][string]$cfg 
+    [Parameter(Mandatory=$true)][string]$cfg,
+    [Parameter(Mandatory=$false)][switch]$force
 )
+# If $force set to $true then we didn't compare jsons and forcing push to webserver and RDS
 
 #####################################################################################
 Write-Host "Uploader 2.07.015 <r.ermakov@emg.fm> 2019-04-18 https://github.com/ykmn/uploader"
@@ -108,9 +113,7 @@ Write-Host "Now on Microsoft Powershell. Making metadata great again."
 Write-Host
 
 # If $debug set to $true then temporary xmls and jsons will not be removed
-# If $force set to $true then we didn't compare jsons and forcing push to webserver and RDS
 $debug = $false
-$force = $false
 
 if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "`n`nThis script wowks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
@@ -642,7 +645,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         }
         
         $samenowplaying = $false
-        # Иecause same song is processed earlier
+        # Because same song is processed earlier
     } else {
     # JINGLE or PROGRAM or NEWS
         if ($rdsdevice -eq "SmartGen") {
