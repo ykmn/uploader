@@ -488,7 +488,7 @@ ForEach ($i in $ReplacementTable.Keys) {
 Write-Host "Now"$xmlfile.root.ELEM_0.Status":" -BackgroundColor DarkCyan
 Write-Host $type"/ "$artist "-" $title
 $now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : Now playing: $type/ $artist - $title"
+Add-Content -Path $log -Value "$now : Now Playing: $type/ $artist - $title"
 
 
 # Reading RDS section from current element
@@ -587,14 +587,14 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     $csOutFile = $currentdir + "\jsons\" + $cfg + "." + $scriptstart + ".rds-current.txt"
     $coOutFile = $currentdir + "\jsons\" + $cfg + ".rds-current.txt"
     if ((Test-Path $coOutFile) -eq $false) {
-        Write-Host "No NOWPLAYING found. Creating blank file"
+        Write-Host "No NOWPLAYING file found. Creating blank file"
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] No NOWPLAYING found. Creating file"
+        Add-Content -Path $log -Value "$now : [-] No NOWPLAYING file found. Creating file"
         $type | Out-File -FilePath $coOutFile
     }
     $type | Out-File -FilePath $csOutFile
     $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : NOWPLAYING: $type/ $artist - $title"
+    Add-Content -Path $log -Value "$now : RDS Now Playing: $type/ $artist - $title"
     Add-Content -Path $log -Value "$now : Temp NOWPLAYING file: $csOutFile "
 
     # Reading RDS config
