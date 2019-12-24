@@ -237,7 +237,12 @@ param ($feature, $remoteHost, $port, $message)
     }
 }
 
+
 # Reading settings
+if (!(Test-Path $currentdir"\"$cfg)) {
+    Write-Host "No config file found."
+    Break
+}
 Get-Content $cfg | ForEach-Object -begin { $h=@{} } -process {
     $k = [regex]::split($_,'=');
     if (($k[0].CompareTo("") -ne 0) `
@@ -277,6 +282,12 @@ Add-Content -Path $log -Value "$now : ** Script $scriptstart Started"
 $xmlfile = $h.Get_Item("XMLF")
 $xmlf = Get-ChildItem -Path $xmlfile
 $dest = $currentdir + "\tmp\" + $xmlf.Name + "." + $scriptstart
+if (!(Test-Path $xmlfile)) {
+    Write-Host "No XML file found."
+    $now = Get-Date -Format HH:mm:ss.fff
+    Add-Content -Path $log -Value "$now : [-] No XML file found."
+    Break
+}
 Write-Host "Copying $xmlf"
 Write-Host "to $dest..."
 Write-Host
