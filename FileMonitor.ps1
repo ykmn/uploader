@@ -1,23 +1,53 @@
+<#
+.NOTES
+    Copyright (c) Roman Ermakov <r.ermakov@emg.fm>
+    Use of this sample source code is subject to the terms of the
+    GNU General Public License under which you licensed this sample source code. If
+    you did not accept the terms of the license agreement, you are not
+    authorized to use this sample source code.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    THIS CODE IS PROVIDED "AS IS" WITH NO WARRANTIES.
+    
+.SYNOPSIS
+    This script monitors changes of *.XML in specified folder $PathToMonitor and executes runps.bat ?.cfg
+    
+.DESCRIPTION
+    Use $ConfigTable array to set dependencies between XML filename and .cfg for uploader2.ps1
+
+.LINK
+    https://github.com/ykmn/uploader/blob/master/FileMonitor.ps1
+
+.EXAMPLE
+    .\FileMonitor.ps1
+#>
+<#
+.VERSIONS
+    FileMonitor.ps1
+
+v1.00 2010-01-17 initial version
+#>
+
+
 # make sure you adjust this to point to the folder you want to monitor
 $PathToMonitor = "\\TECH-INFOSERV1\C$\XML\"
 #$PathToMonitor = "C:\XML\"
 $ConfigTable = @{
-    'EP-MSK2.xml' = 'ep.cfg';
-    'EP-LIGHT.xml' = 'ep-light.cfg';
-    'EP-NEW.xml' = 'ep-new.cfg';
-    'EP-RESIDANCE.xml' = 'ep-residance.cfg';
-    'EP-TOP.xml' = 'ep-top.cfg';
-    'EP-Urban.xml' = 'ep-urban.cfg';
-    'R7-FM.xml' = 'r7-fm.cfg';
-    'R7-MSK.xml' = 'r7-online.cfg';
-    'RR-MSK.xml' = 'rr.cfg';
+    'EP-MSK2.xml'       = 'ep.cfg';
+    'EP-LIGHT.xml'      = 'ep-light.cfg';
+    'EP-NEW.xml'        = 'ep-new.cfg';
+    'EP-RESIDANCE.xml'  = 'ep-residance.cfg';
+    'EP-TOP.xml'        = 'ep-top.cfg';
+    'EP-Urban.xml'      = 'ep-urban.cfg';
+    'R7-FM.xml'         = 'r7-fm.cfg';
+    'R7-MSK.xml'        = 'r7-online.cfg';
+    'RR-MSK.xml'        = 'rr.cfg';
     'RR-INTERNET_1.xml' = 'rr-70.cfg';
     'RR-INTERNET_2.xml' = 'rr-80.cfg';
     'RR-INTERNET_3.xml' = 'rr-90.cfg';
-    'DR-MSK.xml' = 'dr-msk.cfg';
-    };
+    'DR-MSK.xml'        = 'dr-msk.cfg';
+};
     
-
 if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "`n`nThis script wowks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
     Break
@@ -52,8 +82,8 @@ try
         if ($change.TimedOut -eq $false)
         {
             # get information about the changes detected
-            Write-Host "`n`nChange in file detected: " -NoNewline
-            Write-Host $change.Name -BackgroundColor DarkRed
+            Write-Host "`nFile change detected: " -NoNewline
+            Write-Host $change.Name -BackgroundColor DarkRed -NoNewline
             # filename.ext
             $pn = $change.Name
             # \\fullpath\filenameonly
@@ -67,27 +97,37 @@ try
                     $cfg = $ConfigTable[$i]
                 }
             }   
-            Write-Host $pn -BackgroundColor DarkRed -NoNewline
             Write-Host " corresponds to " -NoNewline
-            Write-Host $cfg -BackgroundColor DarkGreen
+            Write-Host $cfg -BackgroundColor DarkGreen -NoNewline
+            Write-Host ". " -NoNewline
 
-            # inline start process: it also works
+            # windowstyle = maximized, minimized or hidden
+            $p = Start-Process ".\runps.bat" -ArgumentList $cfg -WindowStyle Maximized
+            $p.ExitCode
+
+
+
+            # inline start process: it works
             #Invoke-Command -ScriptBlock { & '.\runps.bat' $args[0] } -ArgumentList $cfg
 
+            # start job is ok but not really
+            # $parameters = @{
+            #     ScriptBlock = { Start-Process -WindowStyle Minimized $using:currentdir"\runps.bat" $args[0] }
+            #     ArgumentList = $cfg
+            #     Name = $cfg
+            # }
+            #Start-Job @parameters | Receive-Job -Wait -AutoRemoveJob
 
-            $parameters = @{
-                ScriptBlock = { Start-Process -WindowStyle Minimized $using:currentdir"\runps.bat" $args[0] }
-                ArgumentList = $cfg
-                Name = $cfg
-            }
-            Start-Job @parameters | Receive-Job -Wait -AutoRemoveJob
+          
             $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : Job $cfg started"
-            Write-Host "Job " -NoNewline
-            Write-Host $cfg -BackgroundColor DarkGreen -NoNewline
-            Write-Host " started at $now."
-            Write-Host "Press ESC to stop all jobs and quit.`n"
-
+            # Add-Content -Path $log -Value "$now : Job $cfg started"
+            # Write-Host "Job" $cfg "started at $now."
+            Add-Content -Path $log -Value "$now : $cfg started"
+            Write-Host "Process for" $cfg "started at $now."
+            
+            
+            
+            Write-Host "Press ESC and wait up to 5 seconds for stop all jobs and quit."
         } else {
             if ($count -eq 5)
             {
@@ -109,96 +149,4 @@ finally {
     Add-Content -Path $log -Value "$now : [+] Script $scriptstart finished normally."
 }
 
-
-
-
-
-
-
-
-
-break
-<#
-###############################################################
-# FILE MONITOR
-$FileSystemWatcher = New-Object System.IO.FileSystemWatcher
-$FileSystemWatcher.Path  = $PathToMonitor
-$FileSystemWatcher.IncludeSubdirectories = $true
-
-# make sure the watcher emits events
-$FileSystemWatcher.EnableRaisingEvents = $true
-
-# define the code that should execute when a file change is detected
-$Action = {
-    $details = $event.SourceEventArgs
-    $Timestamp = $event.TimeGenerated
-    $Name = $details.Name
-    $FullPath = $details.FullPath
-    $OldName = $details.OldName
-    $ChangeType = $details.ChangeType
-    $text = "{0} was {1} at {2}" -f $FullPath, $ChangeType, $Timestamp
-    Write-Host ""
-    Write-Host $text -ForegroundColor Green
-    
-    # you can also execute code based on change type here
-    switch ($ChangeType)
-    {
-        'Changed' { "CHANGE" }
-        'Created' { "CREATED"}
-        'Deleted' { "DELETED"
-            # uncomment the below to mimick a time intensive handler
-            Write-Host "Deletion Handler Start" -ForegroundColor Gray
-            Start-Sleep -Seconds 4    
-            Write-Host "Deletion Handler End" -ForegroundColor Gray
-            
-        }
-        'Renamed' { 
-            # this executes only when a file was renamed
-            $text = "File {0} was renamed to {1}" -f $OldName, $Name
-            Write-Host $text -ForegroundColor Yellow
-        }
-        default { Write-Host $_ -ForegroundColor Red -BackgroundColor White }
-    }
-}
-
-# add event handlers
-$handlers = . {
-    Register-ObjectEvent -InputObject $FileSystemWatcher -EventName Changed -Action $Action -SourceIdentifier FSChange
-    Register-ObjectEvent -InputObject $FileSystemWatcher -EventName Created -Action $Action -SourceIdentifier FSCreate
-    Register-ObjectEvent -InputObject $FileSystemWatcher -EventName Deleted -Action $Action -SourceIdentifier FSDelete
-    Register-ObjectEvent -InputObject $FileSystemWatcher -EventName Renamed -Action $Action -SourceIdentifier FSRename
-}
-
-Write-Host "Watching for changes to $PathToMonitor"
-
-try
-{
-    do
-    {
-        Wait-Event -Timeout 1
-        if ($count -eq 9)
-        {
-            $count = 0
-            Write-Host $count -NoNewline -ForegroundColor Blue
-        } else {
-            $count = $count +1
-            Write-Host $count -NoNewline
-        }
-    } until ([System.Console]::KeyAvailable)
-}
-finally
-{
-    # this gets executed when user presses CTRL+C
-    # remove the event handlers
-    Unregister-Event -SourceIdentifier FSChange
-    Unregister-Event -SourceIdentifier FSCreate
-    Unregister-Event -SourceIdentifier FSDelete
-    Unregister-Event -SourceIdentifier FSRename
-    # remove background jobs
-    $handlers | Remove-Job
-    # remove filesystemwatcher
-    $FileSystemWatcher.EnableRaisingEvents = $false
-    $FileSystemWatcher.Dispose()
-    Write-Host "`nEvent Handler disabled."
-}
-#>
+#break

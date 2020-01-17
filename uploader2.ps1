@@ -121,7 +121,11 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 }
 
 #Clear-Host
-[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
+#[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
+#[Console]::OutputEncoding = [System.Text.Encoding]::Default
+#[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+Set-Location -Path "C:\Program Files (x86)\Digispot II\Uploader\"
 [string]$currentdir = Get-Location
 
 
@@ -238,11 +242,12 @@ param ($feature, $remoteHost, $port, $message)
 }
 
 
-# Reading settings
 if (!(Test-Path $currentdir"\"$cfg)) {
     Write-Host "No config file found."
     Break
 }
+
+# Reading settings
 Get-Content $cfg | ForEach-Object -begin { $h=@{} } -process {
     $k = [regex]::split($_,'=');
     if (($k[0].CompareTo("") -ne 0) `
@@ -728,6 +733,9 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         #Remove-Item -Path $dest.FullName
         #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile }
     }
+    if ($debug -ne $true ) {
+        if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile }
+    }
 }
 
 
@@ -828,9 +836,9 @@ if ( `
 if ($debug -ne $true ) {
     if (Test-Path $dest) { Remove-Item -Path $dest }
     if (Test-Path $sOutFile) { Remove-Item -Path $sOutFile }
-    if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile }
 }
 
 $now = Get-Date -Format HH:mm:ss.fff
 Add-Content -Path $log -Value "$now : [*] Script $scriptstart finished normally"
-Write-Host
+Write-Host Script finished.`n
+Start-Sleep -Seconds 3
