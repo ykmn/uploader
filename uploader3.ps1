@@ -22,7 +22,7 @@
     https://github.com/ykmn/uploader/blob/master/readme.md
 
 .EXAMPLE
-    uploader2.ps1 config.cfg -force
+    uploader3.ps1 config.cfg -force
 
 .PARAMETER force
     Force upload operations even if the data is the same.
@@ -96,37 +96,40 @@ v2.04 2017-03-29 more cleanup for Camel Case; settings are now in external confi
 v2.05 2017-05-25 extracting A/T and other values to .json; pushing JSON to HTTP and uploading to FTP only if current type is music;
 v2.06 2017-06-06 checking for another instance of script, added "fun with flags".
 v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.md
-
+V3.00 2020-02-12 discard use of ValueServer, using XML from DJin cur_playing.xml instead ("max data" v3.0 type).
 #>
 
 # Handling command-line parameters
 param (
-    #[string]$cfg = "d:\temp\uploader\test-rr.cfg"
+    #[Parameter(Mandatory=$true)][string]$cfg = "test-ext.cfg",
     [Parameter(Mandatory=$true)][string]$cfg,
-    [Parameter(Mandatory=$false)][switch]$force
+    [Parameter(Mandatory=$false)][switch]$force,
+    [Parameter(Mandatory=$false)][switch]$test
 )
 # If $force set to $true then we didn't compare jsons and forcing push to webserver and RDS
 
 #####################################################################################
-Write-Host "Uploader 2.07.015 <r.ermakov@emg.fm> 2019-04-18 https://github.com/ykmn/uploader"
-Write-Host "Now on Microsoft Powershell. Making metadata great again."
-Write-Host
+Clear-Host
+Write-Host "`nUploader 3.00.002 <r.ermakov@emg.fm> 2020-02-25 https://github.com/ykmn/uploader"
+Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
-# If $debug set to $true then temporary xmls and jsons will not be removed
-$debug = $false
+# If $test set to $true then temporary xmls and jsons will not be removed
+if ($force -eq $true) { $forced = "FORCED" } else {$forced = "" }
+
 
 if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "`n`nThis script wowks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
     Break
 }
 
-#Clear-Host
 #[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
 #[Console]::OutputEncoding = [System.Text.Encoding]::Default
 #[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-Set-Location -Path "C:\Program Files (x86)\Digispot II\Uploader\"
 [string]$currentdir = Get-Location
+$currentdir
+#Set-Location -Path "C:\Program Files (x86)\Digispot II\Uploader\"
+#Set-Location -Path "C:\Users\r.ermakov\Documents\GitHub\uploader\"
 
 
 function New-FTPUpload2  {
@@ -166,14 +169,14 @@ param ($ftp, $user, $pass, $xmlf, $remotepath, $feature)
             # Print results
             foreach ($transfer in $transferResult.Transfers) {
                 $now = Get-Date -Format HH:mm:ss.fff
-                Add-Content -Path $log -Value "$now : [+] $feature upload of $($transfer.FileName) to $ftp OK" -PassThru
+                Add-Content -Path $log -Value "$now : $scriptstart [+] $feature $forced upload of $($transfer.FileName) to $ftp OK" -PassThru
             }
         } finally {
             # Disconnect, clean up
             $session.Dispose()
         }
     } catch [Exception] {
-        Add-Content -Path $log -Value "$now : [-] $feature error uploading to to $ftp : $($_.Exception.Message)" -PassThru
+        Add-Content -Path $log -Value "$now : $scriptstart [-] $feature $forced error uploading to to $ftp : $($_.Exception.Message)" -PassThru
     }
 }
 
@@ -188,7 +191,7 @@ param ($feature, $remoteHost, $port, $message)
         $stream.Write($encodedData, 0, $encodedData.Length)
         $sock.Close()
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [+] $feature string $message sent to $remotehost : $port" -PassThru
+        Add-Content -Path $log -Value "$now : $scriptstart [+] $feature $forced string $message sent to $remotehost : $port" -PassThru
     } catch {
         "oops"
         $ErrorMessage = $_.Exception.Message
@@ -196,7 +199,7 @@ param ($feature, $remoteHost, $port, $message)
         Write-Host $ErrorMessage "///" $FailedItem
         Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] $feature error tcp-sending to $remotehost : $port result: $Error" -PassThru
+        Add-Content -Path $log -Value "$now : $scriptstart [-] $feature $forced error tcp-sending to $remotehost : $port result: $Error" -PassThru
     }
 }
 
@@ -229,7 +232,7 @@ param ($feature, $remoteHost, $port, $message)
         $Sent   = $sock.Send($Buffer)
         $sock.Close()
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [+] $feature string $message sent ( $Sent bytes) to $remotehost : $port" -PassThru
+        Add-Content -Path $log -Value "$now : $scriptstart [+] $feature $forced string $message sent ( $Sent bytes) to $remotehost : $port" -PassThru
 } catch {
         "oops"
         $ErrorMessage = $_.Exception.Message
@@ -237,7 +240,7 @@ param ($feature, $remoteHost, $port, $message)
         Write-Host $ErrorMessage "///" $FailedItem
         Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] $feature error udp-sending to $remotehost : $port result: $Error" -PassThru
+        Add-Content -Path $log -Value "$now : $scriptstart [-] $feature $forced error udp-sending to $remotehost : $port result: $Error" -PassThru
     }
 }
 
@@ -280,7 +283,7 @@ if (!(Test-Path $currentdir"\jsons")) {
 $log = $currentdir + "\Log\" + $today + "-" + $cfg + ".log"
 $scriptstart = Get-Date -Format yyyyMMdd-HHmmss-fff
 $now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : ** Script $scriptstart Started"
+Add-Content -Path $log -Value "$now : $scriptstart ** Script started $forced"
 
 
 # Creating copy of XML file for processing
@@ -290,11 +293,11 @@ $dest = $currentdir + "\tmp\" + $xmlf.Name + "." + $scriptstart
 if (!(Test-Path $xmlfile)) {
     Write-Host "No XML file found."
     $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : [-] No XML file found."
+    Add-Content -Path $log -Value "$now : $scriptstart [-] No XML file found."
     Break
 }
-Write-Host "Copying $xmlf"
-Write-Host "to $dest..."
+Write-Host "Copying $xmlf" -NoNewline
+Write-Host " to $dest..."
 Write-Host
 Copy-Item -Path $xmlf -Destination $dest -Force -Recurse
 Copy-Item -Path $xmlf -Destination $xmlf".bak" -Force -Recurse
@@ -303,34 +306,36 @@ $dest = Get-ChildItem -Path $dest
 Write-Host "Searching for songs in XML:" $dest.FullName
 Write-Host
 
-# Reading XML
-[xml]$xmlfile = Get-Content $dest
-
 # Here goes replacement table
 $ReplacementTable = @{
-';' = '/';
-'Pi ' = '';
-'Pi_' = '';
-'New_' = '';
-'Md_' = '';
-'Edit_' = '';
-'_' = ' ';
-'Dj ' = 'DJ ';
-' Ft.' = ' feat.';
-'Feat.' = 'feat.';
-'Ajr' = 'AJR';
-'Lp' = 'LP';
-'Abba' = 'ABBA';
-'MoDjo' = 'Modjo';
-'Jp' = 'JP';
-'Mccartney' = 'McCartney';
-'Onerepublic' = 'OneRepublic';
-' Vs' = ' vs.';
-'Sos ' = 'SOS ';
-'Dcne' = 'DCNE';
-'  ' = ' '
-};
+    '&Amp;' = "&";
+    '&Apos;' = "'";
+    'Pi ' = '';
+    'Pi_' = '';
+    'New_' = '';
+    'Md_' = '';
+    'Edit_' = '';
+    '_' = ' ';
+    'Dj ' = 'DJ ';
+    ' Ft.' = ' feat.';
+    'Feat.' = 'feat.';
+    'Ajr' = 'AJR';
+    'Lp' = 'LP';
+    'Abba' = 'ABBA';
+    'MoDjo' = 'Modjo';
+    'Jp' = 'JP';
+    'Mccartney' = 'McCartney';
+    'Onerepublic' = 'OneRepublic';
+    ' Vs' = ' vs.';
+    'Sos ' = 'SOS ';
+    'Dcne' = 'DCNE';
+    '  ' = ' '
+    };
 
+# Reading XML
+#[string]$dest1 = $dest
+#[xml]$xmlfile = Get-Content -Path $dest1
+$xmlfile = (Select-Xml -Path $dest -XPath / ).Node
 
 # Creating songs array
 $stream = @{stream = $cfg}
@@ -339,23 +344,22 @@ $stream = @{stream = $cfg}
 <# Required json format:
 { "stream":  "myradio.cfg",
   "songs":  [
-	{ "artist":  "Arilena Ara", "runtime":  149, "dbID":  "151597", "ELEM":  0, "title":  "Nentori (Beverly Pills Remix)", "starttime":  1500984064 },
-	{ "artist":  "Nickelback", "runtime":  197, "dbID":  "1274", "ELEM":  2, "title":  "If Everyone Cared", "starttime":  1500984223 },
-	{ "artist":  "Charlie Puth", "runtime":  203, "dbID":  "152322", "ELEM":  5, "title":  "Attention", "starttime":  1500984426 }
+	{ "artist":  "Arilena Ara", "runtime":  149, "dbID":  "151597", "title":  "Nentori (Beverly Pills Remix)", "starttime":  1500984064 },
+	{ "artist":  "Nickelback", "runtime":  197, "dbID":  "1274", "title":  "If Everyone Cared", "starttime":  1500984223 },
+	{ "artist":  "Charlie Puth", "runtime":  203, "dbID":  "152322", "title":  "Attention", "starttime":  1500984426 }
   ]
 }    #>
 
+Write-Output "elem:" $xmlfile.ELEM_LIST.ELEM | Format-Table
+
 # Filling the array of next-up songs (Type=3)
-ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Type.'#text' -eq '3'} ) {
-
+ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_INFO.Type.'#text' -eq '3'} ) {
     $type = $elem.Elem.FONO_INFO.Type.'#text'
-    $dbid = $elem.Elem.FONO_INFO.dbID.'#text'
-    # splitting ELEM_0 into ELEM and 0
-    $a,$b = $elem.LocalName.split('_')
-    # converting 0 from string to integer for latest sorting
-    [int]$el = [convert]::ToInt32($b, 10)
-
     $artist = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Artist
+    $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
+    $dbid = $elem.Elem.FONO_INFO.dbID.'#text'
+    Write-Host Type:$type / Artist:$artist / Title:$title / DBid:$dbid -BackgroundColor Yellow -ForegroundColor Black
+
 
     # if ; in Artist then artist should be inside name
 <#
@@ -367,7 +371,6 @@ ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Ty
     }
 #>
 
-    $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
     # Searching for Russian Artist/Title
     # !!! CHECK FOR CORRECT ID IN UserAttribs SECTION IN XML
     # AND SET THESE VALUES IN .cfg
@@ -398,6 +401,11 @@ ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Ty
         }
     }
     # Culture and replacements for A/T
+    ForEach ($i in $ReplacementTable.Keys) {
+        # if variable defined
+            if ($artist) { $artist = $artist.replace($i, $ReplacementTable[$i]) }
+            if ($title) { $title = $title.replace($i, $ReplacementTable[$i]) }
+    }
     if ($artist -ne $null) {
         $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower())
         $artist = $artist.Trim()
@@ -415,40 +423,41 @@ ForEach ( $elem in $xmlfile.root.ChildNodes | Where-Object {$_.Elem.FONO_INFO.Ty
 
     # Getting time and converting to Unix Time
     # starttime = XML value in milliseconds from 0:00 today
-    # $ustarttime = value in seconds from 1.01.1970 0:00
+    # $unixstarttime = value in seconds from 1.01.1970 0:00
     # -10800 = corrects UTC +3 in seconds
     [int]$starttime = $elem.Elem.StartTime.'#text'
     [int]$runtime = [math]::Floor([decimal]$elem.Elem.Runtime.'#text' / 1000)
     $utoday = Get-Date -Format dd/MM/yyyy | Get-Date -UFormat %s
-    [int]$ustarttime = [int][double]$utoday + [int](([int][double]$starttime) / 1000) -10800
+    [int]$unixstarttime = [int][double]$utoday + [int](([int][double]$starttime) / 1000) -10800
 
-    Write-Host "Element" $el ":" $artist "-" $title
-
-    Write-Host "Convert to:" $type"/"$dbid"/"$artist"/"$title"["$ustarttime"]"$runtime
-    Write-Host
-
+    Write-Host "Element:" $artist "-" $title
+    #Write-Host "Values: " $type"/"$dbid"/"$artist"/"$title"/"$unixstarttime"/"$runtime"`n"
     $current = @{
         dbID = $dbid
         artist = $artist
         title = $title
-        starttime = $ustarttime
+        starttime = $unixstarttime
         runtime = $runtime
-        ELEM = $el
     }
+    
     $currentobj = New-Object PSObject -Property $current
     [array]$songs += $currentobj
+    Write-Host "Current:" $currentobj -BackgroundColor DarkGreen | Format-Table 
+    #Write-Host "Songs:  " $songs -BackgroundColor DarkCyan | Format-Table
+    Write-Host
 }
 
 # Show what we got in array
-@($songs) | Sort-Object -Unique ELEM | Format-Table
+Write-Host "We have @songs:"
+@($songs) | Format-Table
 
 # Trimming songs array to current and two next-up elements
 if ($songs.Count -ge 3) {
-    $songs = $songs | Sort-Object -Unique ELEM
+    $songs = $songs #| Sort-Object -Unique starttime
     $songs = $songs[0,1,2]
 }
 Write-Host "Trimming songs array to current and two next-up elements:"
-@($songs) | Sort-Object -Unique ELEM | Format-Table
+@($songs) | Format-Table
 
 # File $sOutFile is json for current script;
 # File $oOutFile if json of last successfull script
@@ -457,12 +466,12 @@ $oOutFile = $currentdir + "\jsons\" + $cfg + ".json"
 if ((Test-Path $oOutFile) -eq $false) {
     Write-Host "No stream JSON found. Creating blank file"
     $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : [-] No stream JSON found. Creating blank file"
+    Add-Content -Path $log -Value "$now : $scriptstart [-] No stream JSON found. Creating blank file"
     New-Item -ItemType File -Path $oOutFile
     Add-Content -Path $oOutFile -Value " blank file"
 }
 # Adding table @($songs) to array $stream
-$stream.Add("songs",@(@($songs) | Sort-Object -Unique ELEM))
+$stream.Add("songs",@(@($songs)))
 
 
 ##############################
@@ -470,8 +479,13 @@ $stream.Add("songs",@(@($songs) | Sort-Object -Unique ELEM))
 ##############################
 
 # Getting current A/T
-$type = $xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'
-$artist = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Artist
+$type = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.Type.'#text'
+$artist = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.FONO_STRING_INFO.Artist
+$title = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.FONO_STRING_INFO.Name
+$status = $xmlfile.ELEM_LIST.ChildNodes[0].Status
+$dbid = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.dbID.'#text'
+
+
 # If ; in Artist then artist should be inside name
 <#
 if (Select-String -pattern ";" -InputObject $artist) {
@@ -481,9 +495,16 @@ if (Select-String -pattern ";" -InputObject $artist) {
     $artist=""
 }
 #>
-$title = $xmlfile.root.ELEM_0.Elem.FONO_INFO.FONO_STRING_INFO.Name
+Write-Host CURRENT: -BackgroundColor Yellow -ForegroundColor Black
+Write-Host Type:$type / Artist:$artist / Title:$title / Status:$status -BackgroundColor Yellow -ForegroundColor Black
+
 
 # Culture and replacements for A/T
+ForEach ($i in $ReplacementTable.Keys) {
+    # If variable defined
+        if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
+        if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
+}
 if ($artist -ne $null) {
     $artist = (Get-Culture).TextInfo.ToTitleCase($artist.ToLower())
     $artist = $artist.Trim()
@@ -492,24 +513,22 @@ if ($title -ne $null) {
     $title = (Get-Culture).TextInfo.ToTitleCase($title.ToLower())
     $title = $title.Trim()
 } else { $title = "" }
-
 ForEach ($i in $ReplacementTable.Keys) {
-    # If variable defined
-        if ($artist) { $artist = $artist -replace $i, $ReplacementTable[$i] }
-        if ($title) { $title = $title -replace $i, $ReplacementTable[$i] }
+    # if variable defined
+        if ($artist) { $artist = $artist.replace($i, $ReplacementTable[$i]) }
+        if ($title) { $title = $title.replace($i, $ReplacementTable[$i]) }
 }
 
-
 # Now we have $artist $title $type of "now playing" ELEM_0
-Write-Host "Now"$xmlfile.root.ELEM_0.Status":" -BackgroundColor DarkCyan
+Write-Host "Now" $status ":" -BackgroundColor DarkCyan -NoNewline
 Write-Host $type"/ "$artist "-" $title
 $now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : Now Playing: $type/ $artist - $title"
+Add-Content -Path $log -Value "$now : $scriptstart Now $status : $type/ $artist - $title"
 
 
 # Reading RDS section from current element
-if ($xmlfile.root.ELEM_0.Elem.Rds -ne $null) {
-    $rdspsforced = $xmlfile.root.ELEM_0.Elem.Rds.split("|")
+if ($xmlfile.ELEM_LIST.ChildNodes[0].Elem.Rds -ne $null) {
+    $rdspsforced = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.Rds.split("|")
     Write-Host "Found Elem/RDS:   " $rdspsforced
     $rdspsforced | ForEach-Object -begin { $j=@{} } -process {
         $m = [regex]::split($_,'=');
@@ -519,7 +538,7 @@ if ($xmlfile.root.ELEM_0.Elem.Rds -ne $null) {
     }
     $rdspsforced = $j.Get_Item("PT")
     Write-Host "Forced PS string found: " $rdspsforced
-    Add-Content -Path $log -Value "$now : Forced PS string: $rdspsforced"
+    Add-Content -Path $log -Value "$now : $scriptstart RDS Forced PS string found: $rdspsforced"
 } else {
     Write-Host "Forced RDS string is not found."
     $rdspsforced = $null
@@ -534,29 +553,29 @@ if ($xmlfile.root.ELEM_0.Elem.Rds -ne $null) {
 # If current element is a song and playing and dbid is not null
 # then do json stuff - convert, save and upload.
 # RDS and FTP goes independently.
-if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
-	-and ($xmlfile.root.ELEM_0.Status -eq "Playing") `
-	-and ($xmlfile.root.ELEM_0.Elem.FONO_INFO.dbID.'#text' -ne $null) ) {
+if ( ($type -eq "3") `
+	-and ($status -eq "playing") `
+	-and ($dbid -ne $null) ) {
     # Converting table @($songs) to json and saving to file
-    $json = ConvertTo-Json -InputObject ( @($stream) | Sort-Object -Unique ELEM )
+    Write-Host Songs: $songs
+    
+    $json = ConvertTo-Json -InputObject ( @($stream) )
     $json | Out-File -FilePath $sOutFile
     $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : JSON saved to $sOutFile."
+    Add-Content -Path $log -Value "$now : $scriptstart JSON saved to $sOutFile."
 
     # Compare current .json and last .json
     if ( ((Compare-Object $(Get-Content $sOutFile) $(Get-Content $oOutFile) ) -eq $null) -and ($force -ne $true) ) {
         Write-Host "Previous and current JSONs are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current JSONs are same"
+        Add-Content -Path $log -Value "$now : $scriptstart $forced [x] Previous and current JSONs are same"
         Remove-Item -Path $dest
         Remove-Item -Path $sOutFile
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [*] Script $scriptstart breaks"
+        Add-Content -Path $log -Value "$now : $scriptstart $forced [*] Script breaks"
         Break
     } else {
         Copy-Item -Path $sOutFile -Destination $oOutFile -Force -Recurse
-        # Leave temp files if debug
-        if (!$debug) { Remove-Item -Path $sOutFile }
     }
 
     # Pushing json to hosting
@@ -572,22 +591,24 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
         try { 
 #            Invoke-Command -ScriptBlock {Invoke-WebRequest -Uri $jsonserver -Method POST -Body $json -ContentType "application/json"} -AsJob
             Invoke-WebRequest -Uri $jsonserver -Method POST -Body $json -ContentType "application/json"
-            Write-Host "JSON push engaged. Element:"$xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'", Status:"$xmlfile.root.ELEM_0.Status
+            Write-Host "JSON push engaged. AT: $artist $title Element:"$type", Status:"$status
             $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content $log "$now : [+] JSON push engaged for $scriptstart. Element: $($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'), Status: $($xmlfile.root.ELEM_0.Status), JSON=$($h.Get_Item('JSON'))"
+            Add-Content $log "$now : $scriptstart [+] JSON $forced push engaged. AT: $artist $title Element: $type, Status: $status), JSON=$($h.Get_Item('JSON'))"
         } catch { 
             Write-Host "Webrequest errorcode:" $Error -BackgroundColor Red -ForegroundColor White
             $ErrorMessage = $_.Exception.Message
             $FailedItem = $_.Exception.ItemName
             Write-Host $ErrorMessage "///" $FailedItem
             $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : [-] JSON push error: $Error"
+            Add-Content -Path $log -Value "$now : $scriptstart [-] JSON $forced push error: $Error"
         }
     } else {
-        Write-Host "JSON push didn't engaged. Element:"$xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'", Status:"$xmlfile.root.ELEM_0.Status ", JSON ="$h.Get_Item('JSON') -ForegroundColor Yellow
+        Write-Host "JSON push didn't engaged. Element:"$xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.Type.'#text'", Status:"$xmlfile.ELEM_LIST.ChildNodes[0].Status ", JSON ="$h.Get_Item('JSON') -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : JSON push didn't engaged. Element: $($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text'), Status: $($xmlfile.root.ELEM_0.Status), JSON=$($h.Get_Item('JSON'))"
+        Add-Content -Path $log -Value "$now : $scriptstart JSON $forced push didn't engaged. AT: $artist $title Element: $type, Status: $status), JSON=$($h.Get_Item('JSON'))"
     }
+    # Leave temp files if debug
+    if (!$test) { Remove-Item -Path $sOutFile }
 }
 
 
@@ -597,7 +618,7 @@ if ( ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") `
 
 
 # Sending current song to RDS
-if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
+if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
 
     # Saving NOWPLAYING to file
     $csOutFile = $currentdir + "\jsons\" + $cfg + "." + $scriptstart + ".rds-current.txt"
@@ -605,13 +626,13 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     if ((Test-Path $coOutFile) -eq $false) {
         Write-Host "No NOWPLAYING file found. Creating blank file"
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [-] No NOWPLAYING file found. Creating file"
+        Add-Content -Path $log -Value "$now : $scriptstart [-] No NOWPLAYING file found. Creating file"
         $type | Out-File -FilePath $coOutFile
     }
     $type | Out-File -FilePath $csOutFile
     $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : RDS Now Playing: $type/ $artist - $title"
-    Add-Content -Path $log -Value "$now : Temp NOWPLAYING file: $csOutFile "
+    Add-Content -Path $log -Value "$now : $scriptstart RDS Now Playing: $type/ $artist - $title"
+    Add-Content -Path $log -Value "$now : $scriptstart Temp NOWPLAYING file: $csOutFile "
 
     # Reading RDS config
     $port = $h.Get_Item("RDSPORT")
@@ -688,21 +709,21 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
     if ($rdspsforced -ne $null)  {
         Write-Host
         Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Red
-        Add-Content -Path $log -Value "$now : Detected forced RDS PS: $rdspsforced"
+        Add-Content -Path $log -Value "$now : $scriptstart Detected forced RDS PS: $rdspsforced"
         $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
         Write-Host "Looking for $rdsfile"
-        Add-Content -Path $log -Value "$now : Looking for $rdsfile"
+        Add-Content -Path $log -Value "$now : $scriptstart Looking for $rdsfile"
         if (Test-Path $rdsfile) {
             Write-Host "Sending $rdsfile to $remotehost :$port"
-            Add-Content -Path $log -Value "$now : Sending $rdsfile to $remotehost :$port"                
+            Add-Content -Path $log -Value "$now : $scriptstart Sending $rdsfile to $remotehost :$port"                
             if ($rdsdevice -eq "8700i") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
             if ($rdsdevice -eq "SmartGen") { $messagejoint = Get-Content -Path $rdsfile }
             Write-Host " [+] Sending RDS PS String: $messagejoint"
-            Add-Content -Path $log -Value "$now : [+] Sending RDS PS string: $messagejoint"
+            Add-Content -Path $log -Value "$now : $scriptstart [+] RDS $forced Sending RDS PS string: $messagejoint"
             New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
         } else {
             Write-Host "Forced RDS PS $rdspsforced detected but $rdsfile not found."
-            Add-Content -Path $log -Value "$now : Forced RDS PS $rdspsforced detected but $rdsfile not found."
+            Add-Content -Path $log -Value "$now : $scriptstart Forced RDS PS $rdspsforced detected but $rdsfile not found."
         }
     }
     
@@ -711,8 +732,8 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         # No, NOWPLAYING TYPE is the same, don't update RT
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
-        Add-Content -Path $log -Value "$now : [*] Script $scriptstart breaks"
+        Add-Content -Path $log -Value "$now : $scriptstart [x] Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
+        Add-Content -Path $log -Value "$now : $scriptstart [*] $forced Script breaks"
         # Deleting current NOWPLAYING
         #if (Test-Path $dest) { Remove-Item -Path $dest.FullName }
         #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
@@ -733,7 +754,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
         #Remove-Item -Path $dest.FullName
         #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile }
     }
-    if ($debug -ne $true ) {
+    if ($test -ne $true ) {
         if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile }
     }
 }
@@ -745,7 +766,7 @@ if (($xmlfile.root.ELEM_0.Status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TR
 
 
 # Sending current song to PROSTEAM
-if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
+if ($status -eq "Playing") {
     if ($type -eq "3") { $message = "t=" + $artist + " - " + $title + "`n" ; $samenowplaying = $false; } else { $message = "t=`n" }
     if ($h.Get_Item("PROSTREAM1") -eq "TRUE") {
         $remoteHost = $h.Get_Item("ZIPSERVER1")
@@ -755,8 +776,8 @@ if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
         if ($samenowplaying -eq $true) {
             Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
             $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : [x] Script $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
-            Add-Content -Path $log -Value "$now : [*] Script $scriptstart breaks"
+            Add-Content -Path $log -Value "$now : $scriptstart [x] Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
+            Add-Content -Path $log -Value "$now : $scriptstart [*] Script $forced breaks"
             # Deleting current NOWPLAYING
             #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
             #Break
@@ -792,8 +813,8 @@ if ($xmlfile.root.ELEM_0.Status -eq "Playing") {
 if ( `
         ($h.Get_Item("FTP1") -eq "TRUE") `
         -and (Get-Module -ListAvailable -Name WinSCP) `
-        -and (($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") -or ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "1")) `
-        -and ($xmlfile.root.ELEM_0.Status -eq "Playing") `
+        -and (($type -eq "3") -or ($type -eq "1")) `
+        -and ($status -eq "playing") `
 ) {
     Import-Module WinSCP
     $ftp = $h.Get_Item("FTPSERVER1")
@@ -810,8 +831,8 @@ if ( `
 if ( `
         ($h.Get_Item("FTP2") -eq "TRUE") `
         -and (Get-Module -ListAvailable -Name WinSCP) `
-        -and (($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "3") -or ($xmlfile.root.ELEM_0.Elem.FONO_INFO.Type.'#text' -eq "1")) `
-        -and ($xmlfile.root.ELEM_0.Status -eq "Playing") `
+        -and (($type -eq "3") -or ($type -eq "1")) `
+        -and ($status -eq "playing") `
 ) {
     Import-Module WinSCP
     $ftp = $h.Get_Item("FTPSERVER2")
@@ -833,12 +854,12 @@ if ( `
 
 # Cleaning up
 # Don't delete temp files if debug
-if ($debug -ne $true ) {
+if ($test -ne $true ) {
     if (Test-Path $dest) { Remove-Item -Path $dest }
     if (Test-Path $sOutFile) { Remove-Item -Path $sOutFile }
 }
 
 $now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : [*] Script $scriptstart finished normally"
+Add-Content -Path $log -Value "$now : $scriptstart [*] $forced Script finished normally"
 Write-Host Script finished.`n
 Start-Sleep -Seconds 3
