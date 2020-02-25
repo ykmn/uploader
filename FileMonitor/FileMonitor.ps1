@@ -16,7 +16,7 @@
     Use $ConfigTable array to set dependencies between XML filename and .cfg for uploader3.ps1
 
 .LINK
-    https://github.com/ykmn/uploader/blob/master/FileMonitor.ps1
+    https://github.com/ykmn/uploader/FileMonitor/blob/master/FileMonitor.ps1
 
 .EXAMPLE
     FIleMonitor.ps1 [-force]
@@ -59,51 +59,51 @@ $ConfigTable = @(
     [PSCustomObject]@{
         Xml = 'RR-MSK.xml'
         Cfg = 'rr.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'R7-FM.xml'
         Cfg = 'r7-fm.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'R7-MSK.xml'
         Cfg = 'r7-online.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'EP-LIGHT.xml'
         Cfg = 'ep-light.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'EP-NEW.xml'
         Cfg = 'ep-new.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'EP-RESIDANCE.xml'
         Cfg = 'ep-residance.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'EP-TOP.xml'
         Cfg = 'ep-top.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'EP-Urban.xml'
         Cfg = 'ep-urban.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'RR-INTERNET_1.xml'
         Cfg = 'rr-70.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'RR-INTERNET_2.xml'
         Cfg = 'rr-80.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'RR-INTERNET_3.xml'
         Cfg = 'rr-90.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
     [PSCustomObject]@{
         Xml = 'DR-MSK.xml'
         Cfg = 'dr-msk.cfg'
-        Exe = '.\runps.bat' },
+        Exe = '..\v2\runps.bat' },
 
     [PSCustomObject]@{
         Xml = 'перпн-лняйбю.xml'
@@ -112,54 +112,54 @@ $ConfigTable = @(
     [PSCustomObject]@{
         Xml = 'перпн_FM-70.xml'
         Cfg = 'rr-70-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'перпн_FM-80.xml'
         Cfg = 'rr-80-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'перпн_FM-90.xml'
         Cfg = 'rr-90-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
 
     [PSCustomObject]@{
         Xml = 'Radio7_MOS.xml'
         Cfg = 'r7-fm-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'Radio7_REG.xml'
         Cfg = 'r7-online-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
 
     [PSCustomObject]@{
         Xml = 'ебпною-лняйбю.xml'
         Cfg = 'ep-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'ебпною-NEW.xml'
         Cfg = 'ep-new-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'ебпною-RESIDANCE.xml'
         Cfg = 'ep-residance-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'ебпною-TOP.xml'
         Cfg = 'ep-top-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'ебпною-Urban.xml'
         Cfg = 'ep-urban-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
     [PSCustomObject]@{
         Xml = 'ебпною-LIGHT.xml'
         Cfg = 'ep-light-v3.cfg'
-        Exe = '.\runps3.bat' },
+        Exe = '..\v3\runps3.bat' },
 
     [PSCustomObject]@{
         Xml = 'DR-MOSCOW.xml'
         Cfg = 'dr-msk-v3.cfg'
-        Exe = '.\runps3.bat' }
+        Exe = '..\v3\runps3.bat' }
 
     
 
@@ -257,7 +257,7 @@ try
                 $p.ExitCode
 
                 # inline start process: it also works
-                #Invoke-Command -ScriptBlock { & '.\runps.bat' $args[0] } -ArgumentList $cfgFM
+                #Invoke-Command -ScriptBlock { & '..\v2\runps.bat' $args[0] } -ArgumentList $cfgFM
 
                 # Start-Job is kinda ok but not really
                 # $parameters = @{
