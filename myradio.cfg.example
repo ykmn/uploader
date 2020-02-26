@@ -8,7 +8,7 @@ PROSTREAM1=TRUE
 PROSTREAM2=TRUE
 
 [XML]
-# Using XML from Digispot II Value.Server with XML.Writer module
+# Use XML from Digispot II Value.Server with XML.Writer module with uploader2 and DJin XML Extended 3.0 with uploader3
 XMLF=\\server\share\RR-MSK2.xml
 #XMLF=C:\Temp\XML\RR-MSK2.xml
 
@@ -16,7 +16,7 @@ XMLF=\\server\share\RR-MSK2.xml
 RARTISTID=7
 RTITLEID=17
 DEFAULTAT=en
-# if ru then get AT for RDS from UserAttribs above
+# if ru then RDS receive AT from UserAttribs above
 
 
 [RDS]
@@ -46,7 +46,7 @@ FTPPASS2=pass2
 FTPPATH2=/
 
 [PROSTREAM]
-# Using Omnia ProStream "Character Parser Sample" filter
+# Use Omnia ProStream "Character Parser Sample" filter
 ZIPSERVER1=127.0.0.1
 ZIPPORT1=6001
 ZIPSERVER2=127.0.0.1
