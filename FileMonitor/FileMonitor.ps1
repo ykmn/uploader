@@ -1,4 +1,4 @@
-<#
+Ôªø<#
 .NOTES
     Copyright (c) Roman Ermakov <r.ermakov@emg.fm>
     Use of this sample source code is subject to the terms of the
@@ -29,6 +29,8 @@
 .VERSIONS
     FileMonitor.ps1
 
+v1.05 2020-02-27 cyrillic files are renaming from $ConfigTable.Xml to $ConfigTable.Dst
+v1.04 2020-02-25 improved logging
 v1.03 2020-02-20 added configuration array for link XML with .cfg and executable/batch
 v1.02 2020-02-18 fixed XML-$cfg filtering
 v1.01 2020-02-03 added DJin.exe watchdog
@@ -40,126 +42,51 @@ param (
 )
 
 $encoding = [Console]::OutputEncoding
-#[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("utf-8")
+#[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("UTF8")
 #[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding("oem")
 
 # check filesystem changes every $timeout milliseconds
-$timeout = 20
+$timeout = 10
 # make sure you adjust this to point to the folder you want to monitor
 
 # make sure you adjust this to point to the folder you want to monitor. Don't forget trailing slash!
 $PathToMonitor = "C:\XML\"
+#$PathToMonitor = "\\TECH-INFOSERV1\XML\"
 $DJinPath = "C:\Program Files (x86)\Digispot II\DJin_ValueServerCombo\DJin\"
+Write-Host "`nFileMonitor.ps1   v1.05 2020-02-27"
+Write-Host "Monitoring content of $PathToMonitor for changes every $timeout ms`n"
 
 $ConfigTable = @(
-    [PSCustomObject]@{
-        Xml = 'EP-MSK2.xml'
-        Cfg = 'ep.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'RR-MSK.xml'
-        Cfg = 'rr.cfg'
-        Exe = '..\v2\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'R7-FM.xml'
-        Cfg = 'r7-fm.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'R7-MSK.xml'
-        Cfg = 'r7-online.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'EP-LIGHT.xml'
-        Cfg = 'ep-light.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'EP-NEW.xml'
-        Cfg = 'ep-new.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'EP-RESIDANCE.xml'
-        Cfg = 'ep-residance.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'EP-TOP.xml'
-        Cfg = 'ep-top.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'EP-Urban.xml'
-        Cfg = 'ep-urban.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'RR-INTERNET_1.xml'
-        Cfg = 'rr-70.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'RR-INTERNET_2.xml'
-        Cfg = 'rr-80.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'RR-INTERNET_3.xml'
-        Cfg = 'rr-90.cfg'
-        Exe = '.\runps.bat' },
-    [PSCustomObject]@{
-        Xml = 'DR-MSK.xml'
-        Cfg = 'dr-msk.cfg'
-        Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'EP-MSK2.xml';          Cfg = 'ep.cfg';              Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'RR-MSK.xml';           Cfg = 'rr.cfg';              Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'R7-FM.xml';            Cfg = 'r7-fm.cfg';           Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'R7-MSK.xml';           Cfg = 'r7-online.cfg';       Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'EP-LIGHT.xml';         Cfg = 'ep-light.cfg';        Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'EP-NEW.xml';           Cfg = 'ep-new.cfg';          Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'EP-RESIDANCE.xml';     Cfg = 'ep-residance.cfg';    Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'EP-TOP.xml';           Cfg = 'ep-top.cfg';          Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'EP-Urban.xml';         Cfg = 'ep-urban.cfg';        Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'RR-INTERNET_1.xml';    Cfg = 'rr-70.cfg';           Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'RR-INTERNET_2.xml';    Cfg = 'rr-80.cfg';           Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'RR-INTERNET_3.xml';    Cfg = 'rr-90.cfg';           Dst = '';           Exe = '.\runps.bat' },
+    [PSCustomObject]@{        Xml = 'DR-MSK.xml';           Cfg = 'dr-msk.cfg';          Dst = '';           Exe = '.\runps.bat' },
 
-    [PSCustomObject]@{
-        Xml = '–≈“–Œ-ÃŒ— ¬¿.xml'
-        Cfg = 'rr-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '–≈“–Œ_FM-70.xml'
-        Cfg = 'rr-70-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '–≈“–Œ_FM-80.xml'
-        Cfg = 'rr-80-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '–≈“–Œ_FM-90.xml'
-        Cfg = 'rr-90-v3.cfg'
-        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–†–ï–¢–†–û-–ú–û–°–ö–í–ê.xml';     Cfg = 'rr-v3.cfg';           Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–†–ï–¢–†–û_FM-70.xml';      Cfg = 'rr-70-v3.cfg';        Dst = 'RR-INTERNET_1v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–†–ï–¢–†–û_FM-80.xml';      Cfg = 'rr-80-v3.cfg';        Dst = 'RR-INTERNET_2v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–†–ï–¢–†–û_FM-90.xml';      Cfg = 'rr-90-v3.cfg';        Dst = 'RR-INTERNET_3v3.xml'; Exe = '.\runps3.bat' },
 
-    [PSCustomObject]@{
-        Xml = 'Radio7_MOS.xml'
-        Cfg = 'r7-fm-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = 'Radio7_REG.xml'
-        Cfg = 'r7-online-v3.cfg'
-        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'Radio7_MOS.xml';       Cfg = 'r7-fm-v3.cfg';        Dst = 'R7-FMv3.xml';         Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'Radio7_REG.xml';       Cfg = 'r7-online-v3.cfg';    Dst = 'R7-ONLINEv3.xml';     Exe = '.\runps3.bat' },
 
-    [PSCustomObject]@{
-        Xml = '≈¬–Œœ¿-ÃŒ— ¬¿.xml'
-        Cfg = 'ep-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '≈¬–Œœ¿-NEW.xml'
-        Cfg = 'ep-new-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '≈¬–Œœ¿-RESIDANCE.xml'
-        Cfg = 'ep-residance-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '≈¬–Œœ¿-TOP.xml'
-        Cfg = 'ep-top-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '≈¬–Œœ¿-Urban.xml'
-        Cfg = 'ep-urban-v3.cfg'
-        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{
-        Xml = '≈¬–Œœ¿-LIGHT.xml'
-        Cfg = 'ep-light-v3.cfg'
-        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–ï–í–†–û–ü–ê-–ú–û–°–ö–í–ê.xml';    Cfg = 'ep-v3.cfg';           Dst = 'EP-MSK2v3.xml';       Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–ï–í–†–û–ü–ê-NEW.xml';       Cfg = 'ep-new-v3.cfg';       Dst = 'EP-NEWv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–ï–í–†–û–ü–ê-RESIDANCE.xml'; Cfg = 'ep-residance-v3.cfg'; Dst = 'EP-RESIDANCEv3.xml';  Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–ï–í–†–û–ü–ê-TOP.xml';       Cfg = 'ep-top-v3.cfg';       Dst = 'EP-TOPv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–ï–í–†–û–ü–ê-Urban.xml';     Cfg = 'ep-urban-v3.cfg';     Dst = 'EP-URBANv3.xml';      Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = '–ï–í–†–û–ü–ê-LIGHT.xml';     Cfg = 'ep-light-v3.cfg';     Dst = 'EP-LIGHTv3.xml';      Exe = '.\runps3.bat' },
 
-    [PSCustomObject]@{
-        Xml = 'DR-MOSCOW.xml'
-        Cfg = 'dr-msk-v3.cfg'
-        Exe = '.\runps3.bat' }
+    [PSCustomObject]@{ Xml = 'DR-MOSCOW.xml';        Cfg = 'dr-msk-v3.cfg';       Dst = 'DR-MSKv3.xml';        Exe = '.\runps3.bat' }
 
     
 
@@ -167,23 +94,37 @@ $ConfigTable = @(
     
 if ($PSVersionTable.PSVersion.Major -lt 5)
 {
-    Write-Host "`n`nThis script wowks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
+    Write-Host "`n`nThis script works with PowerShell 5.0 or newer.`nPlease upgrade!`n"
     Break
 }
-[string]$currentdir = Get-Location
+
 ###############################################################
 # setup log files
-
-$today = Get-Date -Format yyyy-MM-dd
+[string]$currentdir = Get-Location
+$PSscript = Get-Item $MyInvocation.InvocationName
+#Write-Host $PSscript.FullName $PSscript.Name $PSscript.BaseName $PSscript.Extension $PSscript.DirectoryName 
 if (!(Test-Path $currentdir"\log"))
 {
     New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
 }
-$logFM = $currentdir + "\Log\" + $today + "-Watcher.log"
-$scriptstartFM = Get-Date -Format yyyyMMdd-HHmmss-fff
-$nowFM = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $logFM -Value "$nowFM : $scriptstartFM ** Script started"
-
+function Write-Log {
+    param (
+        [Parameter(Mandatory=$true)][string]$message,
+        [Parameter(Mandatory=$false)][string]$color
+    )
+    #$logfile = $currentdir + "\log\" + $(Get-Date -Format yyyy-MM-dd) + "-" + $MyInvocation.MyCommand.Name + ".log"
+    $logfile = $currentdir + "\log\" + $(Get-Date -Format yyyy-MM-dd) + "-" + $PSscript.BaseName + ".log"
+    $now = Get-Date -Format HH:mm:ss.fff
+    $message = "$now : " + $message
+    if (!($color)) {
+        Write-Host $message    
+    } else {
+        Write-Host $message -ForegroundColor $color
+    }
+    $message | Out-File $logfile -Append -Encoding "UTF8"
+    
+}
+Write-Log -message "** Script started"
 
 
 ###############################################################
@@ -193,13 +134,22 @@ $FileSystemWatcher = New-Object System.IO.FileSystemWatcher $PathToMonitor
 $FileSystemWatcher.IncludeSubdirectories = $false
 $FileSystemWatcher.Filter = "*.xml"
 
-Write-Host "`nFileMonitor.ps1   v1.03 2020-02-25"
-Write-Host "Monitoring content of $PathToMonitor for changes every $timeout ms`n"
+# Check for availability
+if (!(Test-Path $PathToMonitor))
+{
+    Write-Log -message "[-] Path $PathToMonitor is not available"
+    break
+}
+if (!(Test-Path $PathToMonitor"UPLOAD\"))
+{
+    New-Item -Path $PathToMonitor"UPLOAD\" -Force -ItemType Directory | Out-Null
+    Write-Log -message "[*] Path $PathToMonitor UPLOAD\ is not available, creating."
+}
 
 # If $force = $true then we process all XML/cfg before folder monitoring starts
 if ($forced)
 {
-    Write-Host "First run of: " -NoNewline
+    Write-Host "First run: "
 
     for ($n=0; $n -lt $ConfigTable.count; $n++)
     {
@@ -207,9 +157,7 @@ if ($forced)
         $execute = $ConfigTable[$n].Exe
         $p = Start-Process $execute -ArgumentList $cfgFM -WindowStyle Maximized
         $p.ExitCode
-        Write-Host $cfgFM", " -NoNewline
-        $nowFM = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $logFM -Value "$nowFM : $scriptstartFM ** First-run for $cfg"
+        Write-Log -message "[*] First-run $execute $cfgFM"
         Start-Sleep -Milliseconds 1500
     }
 }
@@ -226,29 +174,36 @@ try
         if ($change.TimedOut -eq $false)
         {
             # get information about the changes detected
-            Write-Host "`nFile change detected: " -NoNewline
-            Write-Host $change.Name -BackgroundColor DarkRed -NoNewline
             # filename.ext
             $pn = $change.Name
             # \\fullpath\filenameonly
             $p = (Get-ChildItem -Path ($PathToMonitor + $change.Name)).BaseName
-            $nowFM = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $logFM -Value "$nowFM : $scriptstartFM File $p was changed"
-            
+            Write-Log -message "File $p was changed" -color Green
             # Search $ConfigTable for parameters corresponding filename
             for ($n=0; $n -lt $ConfigTable.count; $n++)
             {
                 if ($ConfigTable[$n].Xml -like $pn)
                 {
+                    # get array values
                     $cfgFM = $ConfigTable[$n].Cfg
                     $execute = $ConfigTable[$n].Exe
+                    $dst = $PathToMonitor + "UPLOAD\" +$ConfigTable[$n].Dst
+                    Write-Log -message "$p corresponds to $cfgFM and to uploader $execute" -color Green
+                    if ($ConfigTable[$n].Dst -eq '') {
+                        Write-Log "[*] no .Dst defined, skip XML copy" -color Yellow
+                    } else {
+                        # $ConfigTable[$n].Dst is defined
+                        $Error.Clear()
+                        try {
+                            Copy-Item -Path $($PathToMonitor+$pn) -Destination $dst -Force -ErrorAction 0    
+                        }
+                        catch {
+                            Write-Log "[-] File $PathToMonitor$pn was not copied to $dst, error: $($Error[0])" -color Red
+                        }
+                    }
                 }
             }
         
-            Write-Host " corresponds to " -NoNewline
-            Write-Host $cfgFM -BackgroundColor DarkGreen -NoNewline
-            Write-Host ". " -NoNewline
-            
             # Did we found $cfgFM for changed XML file in $ConfigTable?
             if ($null -ne $cfgFM)
             {
@@ -267,11 +222,7 @@ try
                 # }
                 #Start-Job @parameters | Receive-Job -Wait -AutoRemoveJob
           
-                $nowFM = Get-Date -Format HH:mm:ss.fff
-                # Add-Content -Path $logFM -Value "$nowFM : Job $cfgFM started"
-                # Write-Host "Job" $cfgFM "started at $nowFM."
-                Add-Content -Path $logFM -Value "$nowFM : $scriptstartFM Started $execute Uploader for $cfgFM"
-                Write-Host "Process $execute for $cfgFM started at $nowFM."
+                Write-Log -message "Started $execute $cfgFM"
             }
             
             Write-Host "Press ESC to stop."
@@ -284,9 +235,8 @@ try
                 if (!(Get-Process | Where-Object {$PSItem.ProcessName -eq 'DJin'}))
                 {
                     # DJin is not running
-		            $nowFM = Get-Date -Format HH:mm:ss.fff
-        		    Add-Content -Path $logFM -Value "$nowFM : $scriptstartFM [-] DJin is not running. Starting..."
-                    Write-Host "`nDJin is not running. Starting DJin.exe...`n" -ForegroundColor Yellow -BackgroundColor Red
+                    Write-Log -message "[-] DJin is not running. Starting..." -color Red
+
                     & $DJinPath'\DJin.exe'
                     Start-Sleep -Seconds 10
                 }
@@ -303,7 +253,6 @@ finally
     # Get-Job | Stop-Job
     # Get-Job
     # Get-Job -State Completed | Remove-Job
-    $nowFM = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $logFM -Value "$nowFM : $scriptstartFM [+] Script finished normally."
+    Write-Log -message "** Script finished normally."
 }
 [Console]::OutputEncoding = $encoding
