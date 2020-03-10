@@ -110,7 +110,7 @@ param (
 
 #####################################################################################
 Clear-Host
-Write-Host "`nUploader 3.00.002 <r.ermakov@emg.fm> 2020-02-25 https://github.com/ykmn/uploader"
+Write-Host "`nUploader 3.00.003 <r.ermakov@emg.fm> 2020-03-10 https://github.com/ykmn/uploader"
 Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
 # If $test set to $true then temporary xmls and jsons will not be removed
@@ -445,6 +445,8 @@ ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_I
     Write-Host "Current:" $currentobj -BackgroundColor DarkGreen | Format-Table 
     #Write-Host "Songs:  " $songs -BackgroundColor DarkCyan | Format-Table
     Write-Host
+
+
 }
 
 # Show what we got in array
@@ -559,7 +561,7 @@ if ( ($type -eq "3") `
     # Converting table @($songs) to json and saving to file
     Write-Host Songs: $songs
     
-    $json = ConvertTo-Json -InputObject ( @($stream) )
+    $json = ConvertTo-Json -InputObject ($stream)
     $json | Out-File -FilePath $sOutFile
     $now = Get-Date -Format HH:mm:ss.fff
     Add-Content -Path $log -Value "$now : $scriptstart JSON saved to $sOutFile."
