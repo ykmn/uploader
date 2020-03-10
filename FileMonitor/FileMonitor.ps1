@@ -53,38 +53,41 @@ $timeout = 10
 $PathToMonitor = "C:\XML\"
 #$PathToMonitor = "\\TECH-INFOSERV1\XML\"
 $DJinPath = "C:\Program Files (x86)\Digispot II\DJin_ValueServerCombo\DJin\"
-Write-Host "`nFileMonitor.ps1   v1.05 2020-02-27"
+Write-Host "`nFileMonitor.ps1   v1.06 2020-03-10"
 Write-Host "Monitoring content of $PathToMonitor for changes every $timeout ms`n"
 
-$ConfigTable = @(
+<#
     [PSCustomObject]@{        Xml = 'EP-MSK2.xml';          Cfg = 'ep.cfg';              Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'RR-MSK.xml';           Cfg = 'rr.cfg';              Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'R7-FM.xml';            Cfg = 'r7-fm.cfg';           Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'R7-MSK.xml';           Cfg = 'r7-online.cfg';       Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'EP-LIGHT.xml';         Cfg = 'ep-light.cfg';        Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'EP-NEW.xml';           Cfg = 'ep-new.cfg';          Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'EP-RESIDANCE.xml';     Cfg = 'ep-residance.cfg';    Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'EP-TOP.xml';           Cfg = 'ep-top.cfg';          Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'EP-Urban.xml';         Cfg = 'ep-urban.cfg';        Dst = '';           Exe = '.\runps.bat' },
+
+    [PSCustomObject]@{        Xml = 'RR-MSK.xml';           Cfg = 'rr.cfg';              Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'RR-INTERNET_1.xml';    Cfg = 'rr-70.cfg';           Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'RR-INTERNET_2.xml';    Cfg = 'rr-80.cfg';           Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'RR-INTERNET_3.xml';    Cfg = 'rr-90.cfg';           Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'DR-MSK.xml';           Cfg = 'dr-msk.cfg';          Dst = '';           Exe = '.\runps.bat' },
+#>
+$ConfigTable = @(
+    [PSCustomObject]@{ Xml = 'R7-FM.xml';            Cfg = 'r7-fm.cfg';           Dst = '';         Exe = '.\runps.bat' },
+    [PSCustomObject]@{ Xml = 'R7-MSK.xml';           Cfg = 'r7-online.cfg';       Dst = '';     Exe = '.\runps.bat' },
+    [PSCustomObject]@{ Xml = 'DR-MSK.xml';           Cfg = 'dr-msk.cfg';          Dst = '';        Exe = '.\runps.bat' },
 
-    [PSCustomObject]@{ Xml = 'РЕТРО-МОСКВА.xml';     Cfg = 'rr-v3.cfg';           Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'РЕТРО_FM-70.xml';      Cfg = 'rr-70-v3.cfg';        Dst = 'RR-INTERNET_1v3.xml'; Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'РЕТРО_FM-80.xml';      Cfg = 'rr-80-v3.cfg';        Dst = 'RR-INTERNET_2v3.xml'; Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'РЕТРО_FM-90.xml';      Cfg = 'rr-90-v3.cfg';        Dst = 'RR-INTERNET_3v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО-МОСКВА.xml';     Cfg = 'rr.cfg';              Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-70.xml';      Cfg = 'rr-70.cfg';           Dst = 'RR-INTERNET_1v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-80.xml';      Cfg = 'rr-80.cfg';           Dst = 'RR-INTERNET_2v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-90.xml';      Cfg = 'rr-90.cfg';           Dst = 'RR-INTERNET_3v3.xml'; Exe = '.\runps3.bat' },
+
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-МОСКВА.xml';    Cfg = 'ep.cfg';              Dst = 'EP-MSK2v3.xml';       Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-NEW.xml';       Cfg = 'ep-new.cfg';          Dst = 'EP-NEWv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-RESIDANCE.xml'; Cfg = 'ep-residance.cfg';    Dst = 'EP-RESIDANCEv3.xml';  Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-TOP.xml';       Cfg = 'ep-top.cfg';          Dst = 'EP-TOPv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-Urban.xml';     Cfg = 'ep-urban.cfg';        Dst = 'EP-URBANv3.xml';      Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-LIGHT.xml';     Cfg = 'ep-light.cfg';        Dst = 'EP-LIGHTv3.xml';      Exe = '.\runps3.bat' },
 
     [PSCustomObject]@{ Xml = 'Radio7_MOS.xml';       Cfg = 'r7-fm-v3.cfg';        Dst = 'R7-FMv3.xml';         Exe = '.\runps3.bat' },
     [PSCustomObject]@{ Xml = 'Radio7_REG.xml';       Cfg = 'r7-online-v3.cfg';    Dst = 'R7-ONLINEv3.xml';     Exe = '.\runps3.bat' },
-
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-МОСКВА.xml';    Cfg = 'ep-v3.cfg';           Dst = 'EP-MSK2v3.xml';       Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-NEW.xml';       Cfg = 'ep-new-v3.cfg';       Dst = 'EP-NEWv3.xml';        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-RESIDANCE.xml'; Cfg = 'ep-residance-v3.cfg'; Dst = 'EP-RESIDANCEv3.xml';  Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-TOP.xml';       Cfg = 'ep-top-v3.cfg';       Dst = 'EP-TOPv3.xml';        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-Urban.xml';     Cfg = 'ep-urban-v3.cfg';     Dst = 'EP-URBANv3.xml';      Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-LIGHT.xml';     Cfg = 'ep-light-v3.cfg';     Dst = 'EP-LIGHTv3.xml';      Exe = '.\runps3.bat' },
 
     [PSCustomObject]@{ Xml = 'DR-MOSCOW.xml';        Cfg = 'dr-msk-v3.cfg';       Dst = 'DR-MSKv3.xml';        Exe = '.\runps3.bat' }
 
