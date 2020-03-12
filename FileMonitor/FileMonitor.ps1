@@ -29,6 +29,7 @@
 .VERSIONS
     FileMonitor.ps1
 
+v1.06 2020-02-10 removed DJin.ValueServer watchdog; 
 v1.05 2020-02-27 cyrillic files are renaming from $ConfigTable.Xml to $ConfigTable.Dst
 v1.04 2020-02-25 improved logging
 v1.03 2020-02-20 added configuration array for link XML with .cfg and executable/batch
@@ -47,6 +48,8 @@ $encoding = [Console]::OutputEncoding
 
 # check filesystem changes every $timeout milliseconds
 $timeout = 10
+# delay in milliseconds before copy source .xml to $Dst
+$delay = 800
 # make sure you adjust this to point to the folder you want to monitor
 
 # make sure you adjust this to point to the folder you want to monitor. Don't forget trailing slash!
@@ -68,30 +71,34 @@ Write-Host "Monitoring content of $PathToMonitor for changes every $timeout ms`n
     [PSCustomObject]@{        Xml = 'RR-INTERNET_1.xml';    Cfg = 'rr-70.cfg';           Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'RR-INTERNET_2.xml';    Cfg = 'rr-80.cfg';           Dst = '';           Exe = '.\runps.bat' },
     [PSCustomObject]@{        Xml = 'RR-INTERNET_3.xml';    Cfg = 'rr-90.cfg';           Dst = '';           Exe = '.\runps.bat' },
-#>
-$ConfigTable = @(
-    [PSCustomObject]@{ Xml = 'R7-FM.xml';            Cfg = 'r7-fm.cfg';           Dst = '';         Exe = '.\runps.bat' },
-    [PSCustomObject]@{ Xml = 'R7-MSK.xml';           Cfg = 'r7-online.cfg';       Dst = '';     Exe = '.\runps.bat' },
+
     [PSCustomObject]@{ Xml = 'DR-MSK.xml';           Cfg = 'dr-msk.cfg';          Dst = '';        Exe = '.\runps.bat' },
-
-    [PSCustomObject]@{ Xml = 'РЕТРО-МОСКВА.xml';     Cfg = 'rr.cfg';              Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'РЕТРО_FM-70.xml';      Cfg = 'rr-70.cfg';           Dst = 'RR-INTERNET_1v3.xml'; Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'РЕТРО_FM-80.xml';      Cfg = 'rr-80.cfg';           Dst = 'RR-INTERNET_2v3.xml'; Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'РЕТРО_FM-90.xml';      Cfg = 'rr-90.cfg';           Dst = 'RR-INTERNET_3v3.xml'; Exe = '.\runps3.bat' },
-
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-МОСКВА.xml';    Cfg = 'ep.cfg';              Dst = 'EP-MSK2v3.xml';       Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-NEW.xml';       Cfg = 'ep-new.cfg';          Dst = 'EP-NEWv3.xml';        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-RESIDANCE.xml'; Cfg = 'ep-residance.cfg';    Dst = 'EP-RESIDANCEv3.xml';  Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-TOP.xml';       Cfg = 'ep-top.cfg';          Dst = 'EP-TOPv3.xml';        Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-Urban.xml';     Cfg = 'ep-urban.cfg';        Dst = 'EP-URBANv3.xml';      Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'ЕВРОПА-LIGHT.xml';     Cfg = 'ep-light.cfg';        Dst = 'EP-LIGHTv3.xml';      Exe = '.\runps3.bat' },
 
     [PSCustomObject]@{ Xml = 'Radio7_MOS.xml';       Cfg = 'r7-fm-v3.cfg';        Dst = 'R7-FMv3.xml';         Exe = '.\runps3.bat' },
     [PSCustomObject]@{ Xml = 'Radio7_REG.xml';       Cfg = 'r7-online-v3.cfg';    Dst = 'R7-ONLINEv3.xml';     Exe = '.\runps3.bat' },
 
-    [PSCustomObject]@{ Xml = 'DR-MOSCOW.xml';        Cfg = 'dr-msk-v3.cfg';       Dst = 'DR-MSKv3.xml';        Exe = '.\runps3.bat' }
+    [PSCustomObject]@{ Xml = 'R7-MSK.xml';           Cfg = 'r7-online.cfg';    Dst = '';                    Exe = '.\runps.bat' },
+    [PSCustomObject]@{ Xml = 'R7-FM.xml';            Cfg = 'r7-fm.cfg';        Dst = '';                    Exe = '.\runps.bat' },
 
-    
+#>
+$ConfigTable = @(
+
+    [PSCustomObject]@{ Xml = 'РЕТРО-МОСКВА.xml';     Cfg = 'rr.cfg';           Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-70.xml';      Cfg = 'rr-70.cfg';        Dst = 'RR-INTERNET_1v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-80.xml';      Cfg = 'rr-80.cfg';        Dst = 'RR-INTERNET_2v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-90.xml';      Cfg = 'rr-90.cfg';        Dst = 'RR-INTERNET_3v3.xml'; Exe = '.\runps3.bat' },
+
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-МОСКВА.xml';    Cfg = 'ep.cfg';           Dst = 'EP-MSK2v3.xml';       Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-NEW.xml';       Cfg = 'ep-new.cfg';       Dst = 'EP-NEWv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-RESIDANCE.xml'; Cfg = 'ep-residance.cfg'; Dst = 'EP-RESIDANCEv3.xml';  Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-TOP.xml';       Cfg = 'ep-top.cfg';       Dst = 'EP-TOPv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-Urban.xml';     Cfg = 'ep-urban.cfg';     Dst = 'EP-URBANv3.xml';      Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'ЕВРОПА-LIGHT.xml';     Cfg = 'ep-light.cfg';     Dst = 'EP-LIGHTv3.xml';      Exe = '.\runps3.bat' },
+
+    [PSCustomObject]@{ Xml = 'Radio7_MOS.xml';       Cfg = 'r7-fm.cfg';        Dst = 'R7-FMv3.xml';         Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'Radio7_REG.xml';       Cfg = 'r7-online.cfg';    Dst = 'R7-ONLINEv3.xml';     Exe = '.\runps3.bat' },
+
+    [PSCustomObject]@{ Xml = 'DR-MOSCOW.xml';        Cfg = 'dr-msk-v3.cfg';    Dst = 'DR-MSKv3.xml';        Exe = '.\runps3.bat' }
 
 );
     
@@ -181,6 +188,7 @@ try
             $pn = $change.Name
             # \\fullpath\filenameonly
             $p = (Get-ChildItem -Path ($PathToMonitor + $change.Name)).BaseName
+            Write-Host "`n"
             Write-Log -message "File $p was changed" -color Green
             # Search $ConfigTable for parameters corresponding filename
             for ($n=0; $n -lt $ConfigTable.count; $n++)
@@ -191,14 +199,15 @@ try
                     $cfgFM = $ConfigTable[$n].Cfg
                     $execute = $ConfigTable[$n].Exe
                     $dst = $PathToMonitor + "UPLOAD\" +$ConfigTable[$n].Dst
-                    Write-Log -message "$p corresponds to $cfgFM and to uploader $execute" -color Green
+                    # Write-Log -message "$p corresponds to $cfgFM and to uploader $execute" -color Green
                     if ($ConfigTable[$n].Dst -eq '') {
                         Write-Log "[*] no .Dst defined, skip XML copy" -color Yellow
                     } else {
                         # $ConfigTable[$n].Dst is defined
                         $Error.Clear()
+                        Start-Sleep -Milliseconds $delay
                         try {
-                            Copy-Item -Path $($PathToMonitor+$pn) -Destination $dst -Force -ErrorAction 0    
+                            Copy-Item -Path $($PathToMonitor+$pn) -Destination $dst -Force -ErrorAction 0
                         }
                         catch {
                             Write-Log "[-] File $PathToMonitor$pn was not copied to $dst, error: $($Error[0])" -color Red
@@ -234,7 +243,10 @@ try
             if ($count -eq 9)
             {
                 $count = 0
-                Write-Host "." -NoNewline -ForegroundColor Red
+                # Write-Host "." -NoNewline -ForegroundColor Yellow
+                Write-Host "." -NoNewline
+<#
+                # Check if DJin.ValueServer is running
                 if (!(Get-Process | Where-Object {$PSItem.ProcessName -eq 'DJin'}))
                 {
                     # DJin is not running
@@ -243,9 +255,11 @@ try
                     & $DJinPath'\DJin.exe'
                     Start-Sleep -Seconds 10
                 }
+#>
             } else {
                 $count = $count +1
-                Write-Host ">" -NoNewline
+                # Write-Host ">" -NoNewline
+                Write-Host "" -NoNewline
             }
         }
     } until ([System.Console]::KeyAvailable)

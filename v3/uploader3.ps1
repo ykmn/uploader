@@ -118,7 +118,7 @@ if ($force -eq $true) { $forced = "FORCED" } else {$forced = "" }
 
 
 if ($PSVersionTable.PSVersion.Major -lt 5) {
-    Write-Host "`n`nThis script wowks with PowerShell 5.0 or newer.`nPlease upgrade!`n"
+    Write-Host "`n`nThis script works with Windows PowerShell 5.0 or newer.`nPlease upgrade!`n"
     Break
 }
 
