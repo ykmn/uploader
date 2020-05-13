@@ -1,4 +1,4 @@
-<#
+﻿<#
 .NOTES
     Copyright (c) Roman Ermakov <r.ermakov@emg.fm>
     Use of this sample source code is subject to the terms of the
@@ -97,6 +97,7 @@ v2.05 2017-05-25 extracting A/T and other values to .json; pushing JSON to HTTP 
 v2.06 2017-06-06 checking for another instance of script, added "fun with flags".
 v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.md
 V3.00 2020-02-12 discard use of ValueServer, using XML from DJin cur_playing.xml instead ("max data" v3.0 type).
+V3.01 2020-05-13 optimized logging; changed metadata source inside XML.
 #>
 
 # Handling command-line parameters
@@ -110,7 +111,7 @@ param (
 
 #####################################################################################
 Clear-Host
-Write-Host "`nUploader 3.00.003 <r.ermakov@emg.fm> 2020-03-10 https://github.com/ykmn/uploader"
+Write-Host "`nUploader 3.01.001 <r.ermakov@emg.fm> 2020-05-13 https://github.com/ykmn/uploader"
 Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
 # If $test set to $true then temporary xmls and jsons will not be removed
@@ -126,8 +127,10 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 #[Console]::OutputEncoding = [System.Text.Encoding]::Default
 #[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-[string]$currentdir = Get-Location
-$currentdir
+#[string]$currentdir = Get-Location
+$currentdir = Split-Path $MyInvocation.MyCommand.Path -Parent
+Write-Host "Current folder:" $currentdir
+
 #Set-Location -Path "C:\Program Files (x86)\Digispot II\Uploader\"
 #Set-Location -Path "C:\Users\r.ermakov\Documents\GitHub\uploader\"
 
@@ -169,14 +172,14 @@ param ($ftp, $user, $pass, $xmlf, $remotepath, $feature)
             # Print results
             foreach ($transfer in $transferResult.Transfers) {
                 $now = Get-Date -Format HH:mm:ss.fff
-                Add-Content -Path $log -Value "$now : $scriptstart [+] $feature $forced upload of $($transfer.FileName) to $ftp OK" -PassThru
+                Write-Log -message "[+] : $scriptstart $feature $forced upload of $($transfer.FileName) to $ftp OK" -color Green
             }
         } finally {
             # Disconnect, clean up
             $session.Dispose()
         }
     } catch [Exception] {
-        Add-Content -Path $log -Value "$now : $scriptstart [-] $feature $forced error uploading to to $ftp : $($_.Exception.Message)" -PassThru
+        Write-Log -message "[-] : $scriptstart $feature $forced error uploading to to $ftp : $($_.Exception.Message)" -color Red
     }
 }
 
@@ -191,7 +194,7 @@ param ($feature, $remoteHost, $port, $message)
         $stream.Write($encodedData, 0, $encodedData.Length)
         $sock.Close()
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart [+] $feature $forced string $message sent to $remotehost : $port" -PassThru
+        Write-Log -message "[+] : $scriptstart $feature $forced string $message sent to $remotehost : $port" -color Green
     } catch {
         "oops"
         $ErrorMessage = $_.Exception.Message
@@ -199,7 +202,7 @@ param ($feature, $remoteHost, $port, $message)
         Write-Host $ErrorMessage "///" $FailedItem
         Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart [-] $feature $forced error tcp-sending to $remotehost : $port result: $Error" -PassThru
+        Write-Log -message "[-] : $scriptstart $feature $forced error tcp-sending to $remotehost : $port result: $Error" -color Red
     }
 }
 
@@ -232,7 +235,7 @@ param ($feature, $remoteHost, $port, $message)
         $Sent   = $sock.Send($Buffer)
         $sock.Close()
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart [+] $feature $forced string $message sent ( $Sent bytes) to $remotehost : $port" -PassThru
+        Write-Log -message "[+] : $scriptstart $feature $forced string $message sent ( $Sent bytes) to $remotehost : $port" -color Green
 } catch {
         "oops"
         $ErrorMessage = $_.Exception.Message
@@ -240,8 +243,29 @@ param ($feature, $remoteHost, $port, $message)
         Write-Host $ErrorMessage "///" $FailedItem
         Write-Host "TCP-Client errorcode:" $Error -BackgroundColor Red -ForegroundColor White
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart [-] $feature $forced error udp-sending to $remotehost : $port result: $Error" -PassThru
+        Write-Log -message "[-] : $scriptstart $feature $forced error udp-sending to $remotehost : $port result: $Error" -color Red
     }
+}
+
+
+# Log management
+function Write-Log {
+    param (
+        [Parameter(Mandatory=$true)][string]$message,
+        [Parameter(Mandatory=$false)][string]$color
+    )
+    $PSscript = Split-Path $MyInvocation.ScriptName -Leaf
+    #$logfile = $currentdir + "\log\" + $(Get-Date -Format yyyy-MM-dd) + "-" + $MyInvocation.MyCommand.Name + ".log"
+    #$LogFile = $currentdir + "\log\" + $(Get-Date -Format yyyy-MM-dd) + "-" + $PSscript + ".log"
+    $LogFile = $currentdir + "\log\" + $(Get-Date -Format yyyy-MM-dd) + "-" + $cfg + ".log"
+    $LogNow = Get-Date -Format HH:mm:ss.fff
+    $message = "$LogNow : " + $message
+    if (!($color)) {
+        Write-Host $message    
+    } else {
+        Write-Host $message -ForegroundColor $color
+    }
+    $message | Out-File $LogFile -Append -Encoding "UTF8"
 }
 
 
@@ -261,7 +285,6 @@ Get-Content $cfg | ForEach-Object -begin { $h=@{} } -process {
     }
 }
 
-Write-Host "Current folder:" $currentdir
 Write-Host "Using configuration from $cfg"
 Write-Host
 
@@ -269,31 +292,26 @@ Write-Host
 #     Write-Host "CURL.EXE is not found in current folder.`nIf you need to use FTP upload please download CURL.EXE at http://curl.haxx.se/download.html `n" -ForegroundColor Red
 # }
 
-# Setup log files
-$today = Get-Date -Format yyyy-MM-dd
-if (!(Test-Path $currentdir"\log")) {
-    New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
-}
-if (!(Test-Path $currentdir"\tmp")) {
-    New-Item -Path $currentdir"\tmp" -Force -ItemType Directory | Out-Null
-}
-if (!(Test-Path $currentdir"\jsons")) {
-    New-Item -Path $currentdir"\jsons" -Force -ItemType Directory | Out-Null
-}
-$log = $currentdir + "\Log\" + $today + "-" + $cfg + ".log"
-$scriptstart = Get-Date -Format yyyyMMdd-HHmmss-fff
-$now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : $scriptstart ** Script started $forced"
 
+# Setup log files
+#if (!(Test-Path $currentdir"\log")) {
+#    New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
+#}
+#if (!(Test-Path $currentdir"\tmp")) {
+#    New-Item -Path $currentdir"\tmp" -Force -ItemType Directory | Out-Null
+#}
+#if (!(Test-Path $currentdir"\jsons")) {
+#    New-Item -Path $currentdir"\jsons" -Force -ItemType Directory | Out-Null
+#}
+$scriptstart = Get-Date -Format yyyyMMdd-HHmmss-fff
+Write-Log -message "*** : $scriptstart Script started $forced"
 
 # Creating copy of XML file for processing
 $xmlfile = $h.Get_Item("XMLF")
 $xmlf = Get-ChildItem -Path $xmlfile
 $dest = $currentdir + "\tmp\" + $xmlf.Name + "." + $scriptstart
 if (!(Test-Path $xmlfile)) {
-    Write-Host "No XML file found."
-    $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : $scriptstart [-] No XML file found."
+    Write-Log -message "[-] : $scriptstart No XML file found." -color Red
     Break
 }
 Write-Host "Copying $xmlf" -NoNewline
@@ -306,10 +324,11 @@ $dest = Get-ChildItem -Path $dest
 Write-Host "Searching for songs in XML:" $dest.FullName
 Write-Host
 
+#    '&Apos;' = "'";
+
 # Here goes replacement table
 $ReplacementTable = @{
-    '&Amp;' = "&";
-    '&Apos;' = "'";
+    '&Amp;' = '&';
     'Pi ' = '';
     'Pi_' = '';
     'New_' = '';
@@ -317,6 +336,7 @@ $ReplacementTable = @{
     'Edit_' = '';
     '_' = ' ';
     'Dj ' = 'DJ ';
+    'Thk' = 'THK';
     ' Ft.' = ' feat.';
     'Feat.' = 'feat.';
     'Ajr' = 'AJR';
@@ -365,7 +385,7 @@ ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_I
 <#
     if (Select-String -pattern ";" -InputObject $artist) {
         $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : Artist $artist contains ';' - artist will be disabled."
+        Write-Log -message "    : Artist $artist contains ';' - artist will be disabled."
         Write-Host "Artist $artist contains ';' - artist will be disabled." -ForegroundColor Yellow
         $artist=""
     }
@@ -466,9 +486,7 @@ Write-Host "Trimming songs array to current and two next-up elements:"
 $sOutFile = $currentdir + "\jsons\" + $cfg + "." + $scriptstart + ".json"
 $oOutFile = $currentdir + "\jsons\" + $cfg + ".json"
 if ((Test-Path $oOutFile) -eq $false) {
-    Write-Host "No stream JSON found. Creating blank file"
-    $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : $scriptstart [-] No stream JSON found. Creating blank file"
+    Write-Log -message "[-] : $scriptstart No stream JSON found. Creating blank file"
     New-Item -ItemType File -Path $oOutFile
     Add-Content -Path $oOutFile -Value " blank file"
 }
@@ -492,7 +510,7 @@ $dbid = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.dbID.'#text'
 <#
 if (Select-String -pattern ";" -InputObject $artist) {
     $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : Artist $artist contains ';' - artist will be disabled."
+    Write-Log -message "    : Artist $artist contains ';' - artist will be disabled."
     Write-Host "Artist $artist contains ';' - artist will be disabled." -ForegroundColor Yellow
     $artist=""
 }
@@ -522,10 +540,7 @@ ForEach ($i in $ReplacementTable.Keys) {
 }
 
 # Now we have $artist $title $type of "now playing" ELEM_0
-Write-Host "Now" $status ":" -BackgroundColor DarkCyan -NoNewline
-Write-Host $type"/ "$artist "-" $title
-$now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : $scriptstart Now $status : $type/ $artist - $title"
+Write-Log -message "    : $scriptstart Now $status : $type/ $artist - $title" -color Cyan
 
 
 # Reading RDS section from current element
@@ -539,10 +554,9 @@ if ($xmlfile.ELEM_LIST.ChildNodes[0].Elem.Rds -ne $null) {
         }
     }
     $rdspsforced = $j.Get_Item("PT")
-    Write-Host "Forced PS string found: " $rdspsforced
-    Add-Content -Path $log -Value "$now : $scriptstart RDS Forced PS string found: $rdspsforced"
+    Write-Log -message "    : $scriptstart RDS Forced PS string found: $rdspsforced" -color Yellow
 } else {
-    Write-Host "Forced RDS string is not found."
+    Write-Log -message "    : $scriptstart Forced RDS string is not found."
     $rdspsforced = $null
 }
 
@@ -563,18 +577,15 @@ if ( ($type -eq "3") `
     
     $json = ConvertTo-Json -InputObject ($stream)
     $json | Out-File -FilePath $sOutFile
-    $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : $scriptstart JSON saved to $sOutFile."
+    Write-Log -message "    : $scriptstart JSON saved to $sOutFile."
 
     # Compare current .json and last .json
     if ( ((Compare-Object $(Get-Content $sOutFile) $(Get-Content $oOutFile) ) -eq $null) -and ($force -ne $true) ) {
         Write-Host "Previous and current JSONs are same" -ForegroundColor Yellow
-        $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart $forced [x] Previous and current JSONs are same"
+        Write-Log -message "[x] : $scriptstart $forced Previous and current JSONs are same" -color Red
         Remove-Item -Path $dest
         Remove-Item -Path $sOutFile
-        $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart $forced [*] Script breaks"
+        Write-Log -message "[x] : $scriptstart $forced Script breaks" -color Red
         Break
     } else {
         Copy-Item -Path $sOutFile -Destination $oOutFile -Force -Recurse
@@ -594,20 +605,16 @@ if ( ($type -eq "3") `
 #            Invoke-Command -ScriptBlock {Invoke-WebRequest -Uri $jsonserver -Method POST -Body $json -ContentType "application/json"} -AsJob
             Invoke-WebRequest -Uri $jsonserver -Method POST -Body $json -ContentType "application/json"
             Write-Host "JSON push engaged. AT: $artist $title Element:"$type", Status:"$status
-            $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content $log "$now : $scriptstart [+] JSON $forced push engaged. AT: $artist $title Element: $type, Status: $status), JSON=$($h.Get_Item('JSON'))"
+            Write-Log -message "[+] : $scriptstart JSON $forced push engaged. AT: $artist $title Element: $type, Status: $status), JSON=$($h.Get_Item('JSON'))" -color Green
         } catch { 
             Write-Host "Webrequest errorcode:" $Error -BackgroundColor Red -ForegroundColor White
             $ErrorMessage = $_.Exception.Message
             $FailedItem = $_.Exception.ItemName
             Write-Host $ErrorMessage "///" $FailedItem
-            $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : $scriptstart [-] JSON $forced push error: $Error"
+            Write-Log -message "[-] : $scriptstart JSON $forced push error: $Error" -color Red
         }
     } else {
-        Write-Host "JSON push didn't engaged. Element:"$xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.Type.'#text'", Status:"$xmlfile.ELEM_LIST.ChildNodes[0].Status ", JSON ="$h.Get_Item('JSON') -ForegroundColor Yellow
-        $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart JSON $forced push didn't engaged. AT: $artist $title Element: $type, Status: $status), JSON=$($h.Get_Item('JSON'))"
+        Write-Log -message "    : $scriptstart JSON $forced push didn't engaged. AT: $artist $title Element: $type, Status: $status), JSON=$($h.Get_Item('JSON'))" -color Red
     }
     # Leave temp files if debug
     if (!$test) { Remove-Item -Path $sOutFile }
@@ -626,15 +633,12 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     $csOutFile = $currentdir + "\jsons\" + $cfg + "." + $scriptstart + ".rds-current.txt"
     $coOutFile = $currentdir + "\jsons\" + $cfg + ".rds-current.txt"
     if ((Test-Path $coOutFile) -eq $false) {
-        Write-Host "No NOWPLAYING file found. Creating blank file"
-        $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart [-] No NOWPLAYING file found. Creating file"
+        Write-Log -message "[-] : $scriptstart No NOWPLAYING file found. Creating file"
         $type | Out-File -FilePath $coOutFile
     }
     $type | Out-File -FilePath $csOutFile
-    $now = Get-Date -Format HH:mm:ss.fff
-    Add-Content -Path $log -Value "$now : $scriptstart RDS Now Playing: $type/ $artist - $title"
-    Add-Content -Path $log -Value "$now : $scriptstart Temp NOWPLAYING file: $csOutFile "
+    Write-Log -message "    : $scriptstart RDS Now Playing: $type/ $artist - $title" -color Yellow
+    Write-Log -message "    : $scriptstart Temp NOWPLAYING file: $csOutFile "
 
     # Reading RDS config
     $port = $h.Get_Item("RDSPORT")
@@ -710,22 +714,17 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     # Sending forced PS if detected if DEVA SmartGen
     if ($rdspsforced -ne $null)  {
         Write-Host
-        Write-Host "Detected forced RDS PS: $rdspsforced" -BackgroundColor DarkYellow -ForegroundColor Red
-        Add-Content -Path $log -Value "$now : $scriptstart Detected forced RDS PS: $rdspsforced"
+        Write-Log -message "    : $scriptstart Detected forced RDS PS: $rdspsforced" -color Yellow
         $rdsfile = $rdsdevice + "_" + $cfg + "-" + $rdspsforced + ".txt"
-        Write-Host "Looking for $rdsfile"
-        Add-Content -Path $log -Value "$now : $scriptstart Looking for $rdsfile"
+        Write-Log -message "    : $scriptstart Looking for $rdsfile"
+        Write-Log -message "    : $scriptstart $forced $feature Sending RDS $rdspsforced PS string: $messagejoint"
         if (Test-Path $rdsfile) {
-            Write-Host "Sending $rdsfile to $remotehost :$port"
-            Add-Content -Path $log -Value "$now : $scriptstart Sending $rdsfile to $remotehost :$port"                
+            Write-Log -message "    : $scriptstart Sending $rdsfile to $remotehost :$port"                
             if ($rdsdevice -eq "8700i") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
             if ($rdsdevice -eq "SmartGen") { $messagejoint = Get-Content -Path $rdsfile }
-            Write-Host " [+] Sending RDS PS String: $messagejoint"
-            Add-Content -Path $log -Value "$now : $scriptstart [+] RDS $forced Sending RDS PS string: $messagejoint"
             New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
         } else {
-            Write-Host "Forced RDS PS $rdspsforced detected but $rdsfile not found."
-            Add-Content -Path $log -Value "$now : $scriptstart Forced RDS PS $rdspsforced detected but $rdsfile not found."
+            Write-Log -message "    : $scriptstart Forced RDS PS $rdspsforced detected but $rdsfile not found." -color Red
         }
     }
     
@@ -733,9 +732,8 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     if ( ($samenowplaying -eq $true) -and ($force -eq $false) ) {
         # No, NOWPLAYING TYPE is the same, don't update RT
         Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
-        $now = Get-Date -Format HH:mm:ss.fff
-        Add-Content -Path $log -Value "$now : $scriptstart [x] Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
-        Add-Content -Path $log -Value "$now : $scriptstart [*] $forced Script breaks"
+        Write-Log -message "[x] : $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing." -color Yellow
+        Write-Log -message "[*] : $scriptstart $forced Script breaks" -color Red
         # Deleting current NOWPLAYING
         #if (Test-Path $dest) { Remove-Item -Path $dest.FullName }
         #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
@@ -777,12 +775,9 @@ if ($status -eq "Playing") {
         # Is it jingle or commercial?
         if ($samenowplaying -eq $true) {
             Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
-            $now = Get-Date -Format HH:mm:ss.fff
-            Add-Content -Path $log -Value "$now : $scriptstart [x] Previous and current NOWPLAYING types are same ($type). Skipping $feature processing."
-            Add-Content -Path $log -Value "$now : $scriptstart [*] Script $forced breaks"
+            Write-Log -message "[x] : $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing." -color Yellow
             # Deleting current NOWPLAYING
             #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
-            #Break
         } else {
             Write-Host
             Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
@@ -862,6 +857,6 @@ if ($test -ne $true ) {
 }
 
 $now = Get-Date -Format HH:mm:ss.fff
-Add-Content -Path $log -Value "$now : $scriptstart [*] $forced Script finished normally"
-Write-Host Script finished.`n
+Write-Log -message "[*] : $scriptstart $forced Script finished normally"
+Write-Host `n
 Start-Sleep -Seconds 3
