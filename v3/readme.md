@@ -136,15 +136,15 @@ powershell -NoProfile -ExecutionPolicy bypass -File "uploader3.ps1" %1 %2
 17:47:23.856 :     : 20200825-174723-435 Forced RDS string is not found.
 17:47:23.872 :     : 20200825-174723-435 ProStream Now Playing: 2/  - J 01 2019 Shotgun 3
 17:47:23.919 : [+] : 20200825-174723-435 PROSTREAM1  string t=
- sent to emg-coder1 : 6002
+ sent to 127.0.0.1: 6002
 17:47:23.934 : [+] : 20200825-174723-435 PROSTREAM2  string t=
- sent to emg-coder2 : 6002
+ sent to 127.0.0.2 : 6002
 17:47:24.012 :     : 20200825-174723-435 Transliterated artist  and title J 01 2019 Shotgun 3
 17:47:24.012 :     : 20200825-174723-435 RDS Now Playing: 2/  - J 01 2019 Shotgun 3
 17:47:24.028 :     : 20200825-174723-435 Temp NOWPLAYING file: C:\Program Files (x86)\Digispot II\Uploader\jsons\ep.cfg.20200825-174723-435.rds-current.txt 
 17:47:24.184 : [+] : 20200825-174723-435 RDS  string TEXT=Europa Plus ** www.europaplus.ru
 RT+TAG=04,00,00,01,00,00,1,1
- sent ( 67 bytes) to 192.168.100.161 : 5001
+ sent ( 67 bytes) to 127.0.0.1: 5001
 17:47:24.356 : [*] : 20200825-174723-435  Script finished normally
 17:47:27.304 : *** : 20200825-174727-273 Script started 
 17:47:27.647 :     : 20200825-174727-273 Now playing : 3/ Stefy De Cicco & Ben Hamilton - Day 'N' Nite (Martin Jensen Edit)
@@ -153,15 +153,15 @@ RT+TAG=04,00,00,01,00,00,1,1
 17:47:28.271 : [+] : 20200825-174727-273 JSON  push engaged. AT: Stefy De Cicco & Ben Hamilton Day 'N' Nite (Martin Jensen Edit) Element: 3, Status: playing), JSON=TRUE
 17:47:28.302 :     : 20200825-174727-273 ProStream Now Playing: 3/ Stefy De Cicco & Ben Hamilton - Day 'N' Nite (Martin Jensen Edit)
 17:47:28.396 : [+] : 20200825-174727-273 PROSTREAM1  string t=Stefy De Cicco & Ben Hamilton - Day 'N' Nite (Martin Jensen Edit)
- sent to emg-coder1 : 6002
+ sent to 127.0.0.1: 6002
 17:47:28.412 : [+] : 20200825-174727-273 PROSTREAM2  string t=Stefy De Cicco & Ben Hamilton - Day 'N' Nite (Martin Jensen Edit)
- sent to emg-coder2 : 6002
+ sent to 127.0.0.2: 6002
 17:47:28.692 :     : 20200825-174727-273 Transliterated artist Stefy De Cicco & Ben Hamilton and title Day 'N' Nite (Martin Jensen Edit)
 17:47:28.708 :     : 20200825-174727-273 RDS Now Playing: 3/ Stefy De Cicco & Ben Hamilton - Day 'N' Nite (Martin Jensen Edit)
 17:47:28.708 :     : 20200825-174727-273 Temp NOWPLAYING file: C:\Program Files (x86)\Digispot II\Uploader\jsons\ep.cfg.20200825-174727-273.rds-current.txt 
 17:47:28.755 : [+] : 20200825-174727-273 RDS  string TEXT=Stefy De Cicco & Ben Hamilton - Day 'N' Nite (Martin Jensen Edit) ** www.europaplus.ru
 RT+TAG=04,00,29,01,32,33,1,1
- sent ( 121 bytes) to 192.168.100.161 : 5001
+ sent ( 121 bytes) to 127.0.0.1: 5001
 17:47:29.722 : [+] : 20200825-174727-273 FTP1  upload of C:\Program Files (x86)\Digispot II\Uploader\tmp\EP-MSK2v3.xml.20200825-174727-273 to metadata.emgsound.ru OK
 17:47:29.831 : [*] : 20200825-174727-273  Script finished normally
 17:50:01.341 : *** : 20200825-175001-310 Script started 
