@@ -8,15 +8,18 @@ PROSTREAM1=TRUE
 PROSTREAM2=TRUE
 
 [XML]
-# Using XML from Digispot II Value.Server with XML.Writer module
+# Using XML from Digispot II Value.Server with XML.Writer module or XML 
 XMLF=\\server\share\RR-MSK2.xml
 #XMLF=C:\Temp\XML\RR-MSK2.xml
 
 [ID]
-RARTISTID=7
-RTITLEID=17
-DEFAULTAT=en
-# if ru then get AT for RDS from UserAttribs above
+# EP: 8/19/FALSE
+# RR: 7/17/TRUE
+ALTARTISTID=7
+ALTTITLEID=17
+ALTAT=TRUE
+# TRUE, когда в основных атрибутах находится транслит, а в пользовательских - русские AT.
+# FALSE, если в основных атрибутах находятся русские AT.
 
 
 [RDS]
@@ -26,8 +29,11 @@ RDSIP=127.0.0.1
 RDSPORT=5001
 # RDS Connection port type: TCP or UDP
 RDSPORTTYPE=TCP
+# адрес сайта, выводится в RT после названия песни
 RDSSITE=www.retrofm.ru
+# телефон коммерческой службы, выводится в RT во время рекламы
 RDSCOMMERCIAL=+7(495)6204664
+# текст который выводится в RT если не песня и не реклама
 RDSNONMUSIC=Retro FM
 
 [JSON]

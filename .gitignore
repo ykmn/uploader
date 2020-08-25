@@ -8,3 +8,11 @@ jsons/*.*
 log/*.*
 tmp/*.*
 test/*.*
+v3/jsons/test.cfg.rds-current.txt
+CopyXML/filecopy.bat.bak extended logging
+CopyXML/filecopy.bat.bak ok medium logging
+CopyXML/filecopy.bat.bak simple
+CopyXML/filecopy2.bat
+CopyXML/filecopy3.bat
+FileMonitor/FileMonitor-1.06.ps1
+v3/uploader3.01.003.ps1

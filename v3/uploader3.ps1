@@ -59,8 +59,12 @@ RDSNONMUSIC=Europa Plus 106.2 FM
 JSONSERVER=http://127.0.0.1/post.php
 
 [ID]
-rartistid=7
-rtitleid=17
+ALTARTISTID=8
+ALTTITLEID=19
+ALTAT=TRUE
+# если FALSE, то основных атрибутах находятся русские AT.
+# если TRUE, то в основных атрибутах находится транслит, а в пользовательских - русские AT.
+
 
 [FTP1]
 FTPSERVER1=127.0.0.1:30021
@@ -111,7 +115,7 @@ param (
 
 #####################################################################################
 Clear-Host
-Write-Host "`nUploader 3.01.001 <r.ermakov@emg.fm> 2020-05-13 https://github.com/ykmn/uploader"
+Write-Host "`nUploader 3.01.003 <r.ermakov@emg.fm> 2020-08-25 https://github.com/ykmn/uploader"
 Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
 # If $test set to $true then temporary xmls and jsons will not be removed
@@ -140,7 +144,7 @@ param ($ftp, $user, $pass, $xmlf, $remotepath, $feature)
     Write-Host
     Write-Host "---- Running" $feature "----" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host
-    Write-Host "FTP settings:" -BackgroundColor DarkCyan
+    Write-Host "FTP settings:" -BackgroundColor DarkGreen
     Write-Host "original file for upload -" $xmlf.FullName
     Write-Host "local copy of a file for upload -" $dest.Fullname
     # Make sure you have "/" in FTPPATH1 on your config flie
@@ -247,6 +251,26 @@ param ($feature, $remoteHost, $port, $message)
     }
 }
 
+function Convert2Latin($inString) {
+    # Обрезаем пустые пробелы по краям
+    $inString = $inString.Trim()
+    
+    # Определяем таблицу соответствия
+    $char_ru="а","А","б","Б","в","В","г","Г","д","Д","е","Е","ё","Ё","ж", "Ж", "з","З","и","И","й","Й","к","К","л","Л","м","М","н","Н","о","О","п","П","р","Р","с","С","т","Т","у","У","ф","Ф","х", "Х", "ц", "Ц", "ч", "Ч", "ш", "Ш", "щ",  "Щ","ъ","Ъ","ы","Ы","ь","Ь","э","Э","ю", "Ю", "я", "Я"
+    $char_en="a","A","b","B","v","V","g","G","d","D","e","E","e","E","zh","Zh","z","Z","i","I","y","Y","k","K","l","L","m","M","n","N","o","O","p","P","r","R","s","S","t","T","u","U","f","F","kh","Kh","ts","Ts","ch","Ch","sh","Sh","sch","Sch","","","y","Y","","",  "e","E","yu","Yu","ya","Ya"
+    $TempString = ""
+    
+    # Перебираем слово по буквам
+    for ($i = 0; $i -lt $inString.Length; $i++)
+    { 
+        $t = -1
+        # Выясняем позицию заменямой буквы в массиве
+        Do {$t = $t+1} Until (($inString[$i] -ceq $char_ru[$t]) -or ($t -eq 100))
+        # Дополняем строку конвертированного? одновременно производя замену русской буквы на английскую
+        $TempString = $TempString + ($inString[$i] -creplace $char_ru[$t], $char_en[$t])
+    }
+    return $TempString
+}
 
 # Log management
 function Write-Log {
@@ -293,16 +317,16 @@ Write-Host
 # }
 
 
-# Setup log files
-#if (!(Test-Path $currentdir"\log")) {
-#    New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
-#}
-#if (!(Test-Path $currentdir"\tmp")) {
-#    New-Item -Path $currentdir"\tmp" -Force -ItemType Directory | Out-Null
-#}
-#if (!(Test-Path $currentdir"\jsons")) {
-#    New-Item -Path $currentdir"\jsons" -Force -ItemType Directory | Out-Null
-#}
+# Setup folders structure
+if (!(Test-Path $currentdir"\log")) {
+    New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
+}
+if (!(Test-Path $currentdir"\tmp")) {
+    New-Item -Path $currentdir"\tmp" -Force -ItemType Directory | Out-Null
+}
+if (!(Test-Path $currentdir"\jsons")) {
+    New-Item -Path $currentdir"\jsons" -Force -ItemType Directory | Out-Null
+}
 $scriptstart = Get-Date -Format yyyyMMdd-HHmmss-fff
 Write-Log -message "*** : $scriptstart Script started $forced"
 
@@ -328,6 +352,8 @@ Write-Host
 
 # Here goes replacement table
 $ReplacementTable = @{
+    '&Quot;' = '"';
+    '&Apos;' = "'";
     '&Amp;' = '&';
     'Pi ' = '';
     'Pi_' = '';
@@ -356,6 +382,7 @@ $ReplacementTable = @{
 #[string]$dest1 = $dest
 #[xml]$xmlfile = Get-Content -Path $dest1
 $xmlfile = (Select-Xml -Path $dest -XPath / ).Node
+$xmlfile.PreserveWhitespace = $false
 
 # Creating songs array
 $stream = @{stream = $cfg}
@@ -370,7 +397,8 @@ $stream = @{stream = $cfg}
   ]
 }    #>
 
-Write-Output "elem:" $xmlfile.ELEM_LIST.ELEM | Format-Table
+Write-Output "ELEMENTS LIST:"
+Write-Output $xmlfile.ELEM_LIST.ELEM | Format-Table
 
 # Filling the array of next-up songs (Type=3)
 ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_INFO.Type.'#text' -eq '3'} ) {
@@ -381,7 +409,7 @@ ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_I
     Write-Host Type:$type / Artist:$artist / Title:$title / DBid:$dbid -BackgroundColor Yellow -ForegroundColor Black
 
 
-    # if ; in Artist then artist should be inside name
+    # if ; in Artist then artist should be inside Name
 <#
     if (Select-String -pattern ";" -InputObject $artist) {
         $now = Get-Date -Format HH:mm:ss.fff
@@ -392,34 +420,43 @@ ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_I
 #>
 
     # Searching for Russian Artist/Title
-    # !!! CHECK FOR CORRECT ID IN UserAttribs SECTION IN XML
-    # AND SET THESE VALUES IN .cfg
+    # Your MDB may have translit in main fields and cyrillic on UserAttribs
+    # If so use ALTAT=TRUE in .cfg, check for correct ID in UserAttribs .XML section,
+    # and set therse values in .cfg
     # <UserAttribs>
     #    <ELEM><ID dt="i4">7</ID>
     #          <Name>Русский исполнитель</Name><Value>Алла Пугачева</Value></ELEM>
     #    <ELEM><ID dt="i4">17</ID>
     #          <Name>Русское название композиции</Name><Value>Прости, поверь</Value></ELEM>
     # </UserAttribs>
+    #
+    # If your MDB have cyrillic in main fields please use ALTAT=FALSE,
+    # and AT will be transliterated for RDS.
+    $altat = $h.Get_Item("ALTAT")
+    $altartistid = $h.Get_Item("ALTARTISTID")
+    $alttitleid = $h.Get_Item("ALTTITLEID")
+
+    Write-Host "Search for UserAttribs:"
     ForEach ($userattr in $elem.Elem.UserAttribs.ChildNodes) {
-        Write-Host $userattr.Name -BackgroundColor Red
-        Write-Host $userattr.ID.'#text' -BackgroundColor DarkCyan
+        Write-Host " " $userattr.Name " " -BackgroundColor Red -NoNewline
+        Write-Host " " $userattr.ID.'#text' " " -BackgroundColor Blue -NoNewline
         # get UserAttribs Russian Artist and Title IDs from config
-        $rartistid = $h.Get_Item("RARTISTID")
-        $rtitleid = $h.Get_Item("RTITLEID")
-        # 
-        if ($userattr.ID.'#text' -eq $rartistid) {
-            # Russian artist
-            $rartist = $userattr.Value
-            Write-Host $rartist -BackgroundColor DarkCyan
-            $artist = $rartist
-        }
-        if ($userattr.ID.'#text' -eq $rtitleid) {
-            # Russian title
-            $rtitle = $userattr.Value
-            Write-Host $rtitle -BackgroundColor DarkCyan
-            $title = $rtitle
+        if ($altat -eq "TRUE") { # кириллица в пользовательских полях карточки
+            if ($userattr.ID.'#text' -eq $altartistid) {
+                # Get cyrillic artist from UserAttribs
+                $altartist = $userattr.Value
+                Write-Host " " $altartist " " -BackgroundColor DarkGreen
+                if ($altartist) { $artist = $altartist }
+            }
+            if ($userattr.ID.'#text' -eq $alttitleid) {
+                # Get cyrillic title from UserAttribs
+                $alttitle = $userattr.Value
+                Write-Host " " $alttitle " " -BackgroundColor DarkGreen
+                if ($alttitle) { $title = $alttitle }
+            }
         }
     }
+
     # Culture and replacements for A/T
     ForEach ($i in $ReplacementTable.Keys) {
         # if variable defined
@@ -439,7 +476,6 @@ ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_I
             if ($artist) { $artist = $artist.replace($i, $ReplacementTable[$i]) }
             if ($title) { $title = $title.replace($i, $ReplacementTable[$i]) }
     }
-
 
     # Getting time and converting to Unix Time
     # starttime = XML value in milliseconds from 0:00 today
@@ -463,10 +499,8 @@ ForEach ( $elem in $xmlfile.ELEM_LIST.ChildNodes  | Where-Object {$_.Elem.FONO_I
     $currentobj = New-Object PSObject -Property $current
     [array]$songs += $currentobj
     Write-Host "Current:" $currentobj -BackgroundColor DarkGreen | Format-Table 
-    #Write-Host "Songs:  " $songs -BackgroundColor DarkCyan | Format-Table
+    #Write-Host "Songs:  " $songs -BackgroundColor DarkGreen | Format-Table
     Write-Host
-
-
 }
 
 # Show what we got in array
@@ -494,17 +528,39 @@ if ((Test-Path $oOutFile) -eq $false) {
 $stream.Add("songs",@(@($songs)))
 
 
+
 ##############################
 # CURRENT
 ##############################
 
 # Getting current A/T
-$type = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.Type.'#text'
-$artist = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.FONO_STRING_INFO.Artist
-$title = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.FONO_STRING_INFO.Name
-$status = $xmlfile.ELEM_LIST.ChildNodes[0].Status
-$dbid = $xmlfile.ELEM_LIST.ChildNodes[0].Elem.FONO_INFO.dbID.'#text'
+$elem = $xmlfile.ELEM_LIST.ChildNodes[0]
+$type = $elem.Elem.FONO_INFO.Type.'#text'
+$artist = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Artist
+$title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
+$dbid = $elem.Elem.FONO_INFO.dbID.'#text'
+$status = $elem.Status
 
+# get UserAttribs Russian Artist and Title IDs from config
+if ($altat -eq "TRUE") { # кириллица в пользовательских полях карточки
+    ForEach ($userattr in $elem.Elem.UserAttribs.ChildNodes) {
+    Write-Host $userattr.Name  -BackgroundColor Red
+    Write-Host $userattr.ID.'#text' " : " $altartistid -BackgroundColor Blue
+    # get UserAttribs Russian Artist and Title IDs from config
+        if ($userattr.ID.'#text' -eq $altartistid) {
+            # Get cyrillic artist from UserAttribs
+            $altartist = $userattr.Value
+            Write-Host $altartist -BackgroundColor DarkGreen
+            if ($altartist) { $artist = $altartist }
+        }
+        if ($userattr.ID.'#text' -eq $alttitleid) {
+            # Get cyrillic title from UserAttribs
+            $alttitle = $userattr.Value
+            Write-Host $alttitle -BackgroundColor DarkGreen
+            if ($alttitle) { $title = $alttitle }
+        }
+    }
+}
 
 # If ; in Artist then artist should be inside name
 <#
@@ -515,9 +571,9 @@ if (Select-String -pattern ";" -InputObject $artist) {
     $artist=""
 }
 #>
-Write-Host CURRENT: -BackgroundColor Yellow -ForegroundColor Black
-Write-Host Type:$type / Artist:$artist / Title:$title / Status:$status -BackgroundColor Yellow -ForegroundColor Black
 
+Write-Host DETECTED CURRENT SONG: -BackgroundColor Yellow -ForegroundColor Black
+Write-Host Type:$type / Artist:$artist / Title:$title / DBid:$dbid -BackgroundColor Yellow -ForegroundColor Black
 
 # Culture and replacements for A/T
 ForEach ($i in $ReplacementTable.Keys) {
@@ -541,7 +597,11 @@ ForEach ($i in $ReplacementTable.Keys) {
 
 # Now we have $artist $title $type of "now playing" ELEM_0
 Write-Log -message "    : $scriptstart Now $status : $type/ $artist - $title" -color Cyan
-
+Write-Host STORING NOW PLAYING SONG: -BackgroundColor Yellow -ForegroundColor Black
+Write-Host Type:$type / Artist:$artist / Title:$title / DBid:$dbid -BackgroundColor Yellow -ForegroundColor Black
+# Storing current AT for ProStream and RDS
+$cArtist = $artist
+$cTitle = $title
 
 # Reading RDS section from current element
 if ($xmlfile.ELEM_LIST.ChildNodes[0].Elem.Rds -ne $null) {
@@ -561,10 +621,10 @@ if ($xmlfile.ELEM_LIST.ChildNodes[0].Elem.Rds -ne $null) {
 }
 
 
+
 ##############################
 # JSON
 ##############################
-
 
 # If current element is a song and playing and dbid is not null
 # then do json stuff - convert, save and upload.
@@ -621,14 +681,75 @@ if ( ($type -eq "3") `
 }
 
 
+
+##############################
+# PROSTREAM
+##############################
+
+# Restoring AT
+$artist = $cArtist
+$title = $cTitle
+# Sending current song to PROSTEAM
+if ($status -eq "Playing") {
+    if ($h.Get_Item("PROSTREAM1") -eq "TRUE") {
+        $remoteHost = $h.Get_Item("ZIPSERVER1")
+        $port = $h.Get_Item("ZIPPORT1")
+        $feature = "PROSTREAM1"
+        # Is it jingle or commercial?
+        if ($samenowplaying -eq $true) {
+            Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
+            Write-Log -message "[x] : $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing." -color Yellow
+            # Deleting current NOWPLAYING
+            #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
+        } else {
+            Write-Host
+            Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
+            Write-Host
+            if ($altat -eq "ALT") { # кириллица в пользовательских полях карточки
+#                $artist = $altartist
+#                $title = $alttitle
+            }
+            if ($type -eq "3") {
+                $message = "t=" + $artist + " - " + $title + "`n" ;
+                $samenowplaying = $false;
+            } else {
+                $message = "t=`n"
+            }
+            Write-Log -message "    : $scriptstart ProStream Now Playing: $type/ $artist - $title" -color Yellow
+     
+            Write-Host "$feature Message:" $message -BackgroundColor Yellow -ForegroundColor Black
+            New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
+            if ($h.Get_Item("PROSTREAM2") -eq "TRUE") {
+                $remoteHost = $h.Get_Item("ZIPSERVER2")
+                $port = $h.Get_Item("ZIPPORT2")
+                $feature = "PROSTREAM2"
+                Write-Host
+                Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
+                Write-Host
+                Write-Host "$feature Message:" -BackgroundColor Yellow -ForegroundColor Black
+                New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
+            }
+            #Remove-Item -Path $csOutFile.FullName
+            #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
+        }
+    }
+}
+
+
+
 ##############################
 # RDS
 ##############################
 
-
+# Restoring AT
+$artist = $cArtist
+$title = $cTitle
 # Sending current song to RDS
 if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
-
+    Write-Host
+    Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
+    Write-Host
+    
     # Saving NOWPLAYING to file
     $csOutFile = $currentdir + "\jsons\" + $cfg + "." + $scriptstart + ".rds-current.txt"
     $coOutFile = $currentdir + "\jsons\" + $cfg + ".rds-current.txt"
@@ -636,9 +757,6 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
         Write-Log -message "[-] : $scriptstart No NOWPLAYING file found. Creating file"
         $type | Out-File -FilePath $coOutFile
     }
-    $type | Out-File -FilePath $csOutFile
-    Write-Log -message "    : $scriptstart RDS Now Playing: $type/ $artist - $title" -color Yellow
-    Write-Log -message "    : $scriptstart Temp NOWPLAYING file: $csOutFile "
 
     # Reading RDS config
     $port = $h.Get_Item("RDSPORT")
@@ -651,12 +769,14 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
         $rdsdevice = $h.Get_Item("RDSDEVICE")
     }
     $feature = "RDS"
+    $artist = Convert2Latin($artist)
+    $title = Convert2Latin($title)
+    Write-Log -message "    : $scriptstart Transliterated artist $artist and title $title"
 
+    $type | Out-File -FilePath $csOutFile
+    Write-Log -message "    : $scriptstart RDS Now Playing: $type/ $artist - $title" -color Yellow
+    Write-Log -message "    : $scriptstart Temp NOWPLAYING file: $csOutFile "
 
-    Write-Host
-    Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
-    Write-Host
-    
     # Compiling RT/RT+ strings for different element types
     if ($type -eq '1') {
     # COMMERCIAL
@@ -705,8 +825,8 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
         Get-Content $coOutFile
         $samenowplaying = ( (Get-FileHash $csOutFile).hash -eq (Get-FileHash $coOutFile).hash )
     }
-    Write-Host "$feature RT  Message:" $message -BackgroundColor DarkCyan
-    Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor DarkCyan
+    Write-Host "$feature RT  Message:" $message -BackgroundColor Yellow -ForegroundColor Black
+    Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor Yellow -ForegroundColor Black
     if ($rdsdevice -eq "SmartGen") { $messagejoint = $message + "`n" + $rtplus + "`n" }
     if ($rdsdevice -eq "8700i") { $messagejoint = $message + "`n" }
 
@@ -760,51 +880,10 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
 }
 
 
-##############################
-# PROSTREAM
-##############################
-
-
-# Sending current song to PROSTEAM
-if ($status -eq "Playing") {
-    if ($type -eq "3") { $message = "t=" + $artist + " - " + $title + "`n" ; $samenowplaying = $false; } else { $message = "t=`n" }
-    if ($h.Get_Item("PROSTREAM1") -eq "TRUE") {
-        $remoteHost = $h.Get_Item("ZIPSERVER1")
-        $port = $h.Get_Item("ZIPPORT1")
-        $feature = "PROSTREAM1"
-        # Is it jingle or commercial?
-        if ($samenowplaying -eq $true) {
-            Write-Host "Previous and current NOWPLAYING types are same" -ForegroundColor Yellow
-            Write-Log -message "[x] : $scriptstart Previous and current NOWPLAYING types are same ($type). Skipping $feature processing." -color Yellow
-            # Deleting current NOWPLAYING
-            #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
-        } else {
-            Write-Host
-            Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
-            Write-Host
-            Write-Host "$feature Message:" -BackgroundColor DarkCyan
-            New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
-            if ($h.Get_Item("PROSTREAM2") -eq "TRUE") {
-                $remoteHost = $h.Get_Item("ZIPSERVER2")
-                $port = $h.Get_Item("ZIPPORT2")
-                $feature = "PROSTREAM2"
-                Write-Host
-                Write-Host "---- Running $feature ----" -BackgroundColor DarkGreen -ForegroundColor White
-                Write-Host
-                Write-Host "$feature Message:" -BackgroundColor DarkCyan
-                New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $message
-            }
-            #Remove-Item -Path $csOutFile.FullName
-            #if (Test-Path $csOutFile) { Remove-Item -Path $csOutFile.FullName }
-        }
-    }
-}
-
 
 ##############################
 # FTP
 ##############################
-
 
 # Uploading XML to first FTP server
 if ( `
@@ -856,7 +935,6 @@ if ($test -ne $true ) {
     if (Test-Path $sOutFile) { Remove-Item -Path $sOutFile }
 }
 
-$now = Get-Date -Format HH:mm:ss.fff
 Write-Log -message "[*] : $scriptstart $forced Script finished normally"
 Write-Host `n
 Start-Sleep -Seconds 3
