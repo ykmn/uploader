@@ -710,6 +710,8 @@ if ($status -eq "Playing") {
 #                $title = $alttitle
             }
             if ($type -eq "3") {
+                $artist = Convert2Latin($artist)
+                $title = Convert2Latin($title)
                 $message = "t=" + $artist + " - " + $title + "`n" ;
                 $samenowplaying = $false;
             } else {
