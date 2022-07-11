@@ -45,7 +45,7 @@ XMLF=\\server\share\EP-MSK.xml
 #XMLF=C:\XML\uploader\EP-MSK2.xml
 
 [RDS]
-# Set RDS Device type: 8700i or SmartGen
+# Set RDS Device type: 8700i, SmartGen, LinkShare
 RDSDEVICE=8700i
 RDSIP=127.0.0.1
 RDSPORT=5001
@@ -102,6 +102,8 @@ v2.06 2017-06-06 checking for another instance of script, added "fun with flags"
 v2.07 2017-07-26 script remixed for Windows Powershell: changed everything - see README.md
 V3.00 2020-02-12 discard use of ValueServer, using XML from DJin cur_playing.xml instead ("max data" v3.0 type).
 V3.01 2020-05-13 optimized logging; changed metadata source inside XML.
+V3.02 2022-02-10 Added RDS for Sound4 Link&Share protocol, some SmartGen RT+ cleanup.
+V3.03 2022-07-11 XMLs with Retransmission Blocks now upload to FTP too.
 #>
 
 # Handling command-line parameters
@@ -115,7 +117,7 @@ param (
 
 #####################################################################################
 Clear-Host
-Write-Host "`nUploader 3.01.003 <r.ermakov@emg.fm> 2020-08-25 https://github.com/ykmn/uploader"
+Write-Host "`nUploader 3.03.001 <r.ermakov@emg.fm> 2022-07-11 https://github.com/ykmn/uploader"
 Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
 # If $test set to $true then temporary xmls and jsons will not be removed
@@ -540,6 +542,10 @@ $artist = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Artist
 $title = $elem.Elem.FONO_INFO.FONO_STRING_INFO.Name
 $dbid = $elem.Elem.FONO_INFO.dbID.'#text'
 $status = $elem.Status
+$retransmission = $elem.RETRANSMISSION
+
+Write-Host "Retransmission type:" $retransmission -BackgroundColor Yellow -ForegroundColor White
+
 
 # get UserAttribs Russian Artist and Title IDs from config
 if ($altat -eq "TRUE") { # кириллица в пользовательских полях карточки
@@ -767,7 +773,9 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     $rdssite = $h.Get_Item("RDSSITE")
     $rdscommercial = $h.Get_Item("RDSCOMMERCIAL")
     $rdsnonmusic = $h.Get_Item("RDSNONMUSIC")
-    if ( ($h.Get_Item("RDSDEVICE") -eq "8700i") -or ($h.Get_Item("RDSDEVICE") -eq "SmartGen") ) {
+    if ( ($h.Get_Item("RDSDEVICE") -eq "8700i") -or `
+         ($h.Get_Item("RDSDEVICE") -eq "SmartGen") -or `
+         ($h.Get_Item("RDSDEVICE") -eq "LinkShare") ) {
         $rdsdevice = $h.Get_Item("RDSDEVICE")
     }
     $feature = "RDS"
@@ -783,13 +791,19 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     if ($type -eq '1') {
     # COMMERCIAL
         if ($rdsdevice -eq "SmartGen") {
-            $message = 'TEXT='+$rdscommercial +' ** '+$rdssite
-            [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+            [string]$message = 'TEXT='+$rdscommercial +' ** '+$rdssite
+            [string]$rtplus = "RT+TAG=04,00,00,01,00,00,0,0"
+            # RT+ last 0,0: ItemRunning 0, Timeout 0min
         }
         if ($rdsdevice -eq "8700i") {
-            $message = 'RT='+$rdscommercial +' ** '+$rdssite
+            [string]$message = 'RT='+$rdscommercial +' ** '+$rdssite
             [string]$rtplus = ""
         }
+        if ($rdsdevice -eq "LinkShare") {
+            [string]$message = 'LOGIN admin,admin^RDS.RT='+$rdscommercial +' ** '+$rdssite+"^LOGOUT^"
+            [string]$rtplus = ""
+        }
+        
         
         # Сompare current NOWPLAYING TYPE and last NOWPLAYING TYPE
         Write-Host "Previous Now Playing Type:"
@@ -799,13 +813,18 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     # MUSIC
         [int]$alenght = $artist.Length
         [int]$tlenght = $title.Length
-        [int]$tstart = $alenght+3           # 3 is because ' - ' between artist and title in $message RT string
+        [int]$tstart = $alenght+3           # 3 is because of ' - ' between artist and title in $message RT string
         if ($rdsdevice -eq "SmartGen") {
-            $message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite 
+            [string]$message = 'TEXT='+$artist+' - '+$title+' ** '+$rdssite 
             [string]$rtplus = "RT+TAG=04,00,"+$alenght.ToString("00")+",01,"+$tstart.ToString("00")+","+$tlenght.ToString("00")+",1,1"
+            # RT+ last 1,1: ItemRunning 1, Timeout 1min
         }
         if ($rdsdevice -eq "8700i") {
-            $message = 'RT='+$artist+' - '+$title+' ** '+$rdssite
+            [string]$message = 'RT='+$artist+' - '+$title+' ** '+$rdssite
+            [string]$rtplus = ""
+        }
+        if ($rdsdevice -eq "LinkShare") {
+            [string]$message = 'LOGIN admin,admin^RDS.RT='+$artist+' - '+$title+' ** '+$rdssite+"^LOGOUT^"
             [string]$rtplus = ""
         }
         
@@ -814,11 +833,16 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     } else {
     # JINGLE or PROGRAM or NEWS
         if ($rdsdevice -eq "SmartGen") {
-            $message = 'TEXT='+$rdsnonmusic+' ** '+$rdssite
-            [string]$rtplus = "RT+TAG=04,00,00,01,00,00,1,1"
+            [string]$message = 'TEXT='+$rdsnonmusic+' ** '+$rdssite
+            [string]$rtplus = "RT+TAG=04,00,00,01,00,00,0,0"
+            # RT+ last 0,0: ItemRunning 0, Timeout 0min
         }
         if ($rdsdevice -eq "8700i") {
-            $message = 'RT='+$rdsnonmusic+' ** '+$rdssite
+            [string]$message = 'RT='+$rdsnonmusic+' ** '+$rdssite
+            [string]$rtplus = ""
+        }
+        if ($rdsdevice -eq "LinkShare") {
+            [string]$message = 'LOGIN admin,admin^RDS.RT='+$rdsnonmusic+' ** '+$rdssite+"^LOGOUT^"
             [string]$rtplus = ""
         }
         
@@ -831,6 +855,7 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
     Write-Host "$feature RT+ Message:" $rtplus -BackgroundColor Yellow -ForegroundColor Black
     if ($rdsdevice -eq "SmartGen") { $messagejoint = $message + "`n" + $rtplus + "`n" }
     if ($rdsdevice -eq "8700i") { $messagejoint = $message + "`n" }
+    if ($rdsdevice -eq "LinkShare") { $messagejoint = $message + "`n" }
 
     # Updating PS
     # Sending forced PS if detected if DEVA SmartGen
@@ -843,6 +868,7 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
         if (Test-Path $rdsfile) {
             Write-Log -message "    : $scriptstart Sending $rdsfile to $remotehost :$port"                
             if ($rdsdevice -eq "8700i") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
+            if ($rdsdevice -eq "LinkShare") { $messagejoint = (Get-Content -Path $rdsfile -Raw).Replace("`r`n","`n") }
             if ($rdsdevice -eq "SmartGen") { $messagejoint = Get-Content -Path $rdsfile }
             New-TCPSend -feature $feature -remoteHost $remoteHost -port $port -message $messagejoint
         } else {
@@ -886,12 +912,11 @@ if (($status -eq "Playing") -and ($h.Get_Item("RDS") -eq "TRUE")) {
 ##############################
 # FTP
 ##############################
-
+#        -and (($type -eq "3") -or ($type -eq "1") -or ($retransmission -eq "1")) `
 # Uploading XML to first FTP server
 if ( `
         ($h.Get_Item("FTP1") -eq "TRUE") `
         -and (Get-Module -ListAvailable -Name WinSCP) `
-        -and (($type -eq "3") -or ($type -eq "1")) `
         -and ($status -eq "playing") `
 ) {
     Import-Module WinSCP
@@ -906,10 +931,10 @@ if ( `
 }
 
 # Uploading XML to second FTP server
+#        -and (($type -eq "3") -or ($type -eq "1")) `
 if ( `
         ($h.Get_Item("FTP2") -eq "TRUE") `
         -and (Get-Module -ListAvailable -Name WinSCP) `
-        -and (($type -eq "3") -or ($type -eq "1")) `
         -and ($status -eq "playing") `
 ) {
     Import-Module WinSCP
