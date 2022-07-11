@@ -7,20 +7,15 @@ FileMonitor 1.03
 Для определения соответствия между XML, обработчиком (uploader) и файлом конфигурации используется массив `$ConfigTable`:
 ```powershell
 $ConfigTable = @(
-    [PSCustomObject]@{
-        Xml = 'EP-MSK2.xml'
-        Cfg = 'ep.cfg'
-        Exe = '.\runps2.bat' },
-    [PSCustomObject]@{
-        Xml = 'RR-MSK.xml'
-        Cfg = 'rr-v3.cfg'
-        Exe = '.\runps3.bat' }
+    [PSCustomObject]@{ Xml = 'РЕТРО-МОСКВА.xml';     Cfg = 'rr-v3.cfg';           Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-70.xml';      Cfg = 'rr-70-v3.cfg';        Dst = 'RR-INTERNET_1v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-80.xml';      Cfg = 'rr-80-v3.cfg';        Dst = 'RR-INTERNET_2v3.xml'; Exe = '.\runps3.bat' },
+    [PSCustomObject]@{ Xml = 'РЕТРО_FM-90.xml';      Cfg = 'rr-90-v3.cfg';        Dst = 'RR-INTERNET_3v3.xml'; Exe = '.\runps3.bat' },
 
 ```
 Отредактируйте этот массив исходя из ваших файлов. Запятая после последней закрывающей фигурной скобки } не нужна!
 
-* При изменении EP-MSK2.xml будет запущен `runps2.bat ep.cfg`
-* При изменении RR-MSK.xml будет запущен `runps3.bat rr-v3.cfg`
+* При изменении РЕТРО-МОСКВА.xml, этот файл будет скопирован с именем RR-MSKv3.xml, и будет запущен `runps3.bat rr-v3.cfg`
 
 Runps - bat-стартер для powershell-скрипта uploader2.ps1 (XML от Джин.ValueServer) или uploader3.ps1 (XML от
 [Что играет в плеере XML 3.0](https://redmine.digispot.ru/projects/digispot/wiki/%D0%A7%D1%82%D0%BE_%D0%B8%D0%B3%D1%80%D0%B0%D0%B5%D1%82_%D0%B2_%D0%BF%D0%BB%D0%B5%D0%B5%D1%80%D0%B5_%D0%B2_%D0%B2%D0%B8%D0%B4%D0%B5_XML_v_3_0 ))
@@ -37,7 +32,7 @@ FileMonitor.ps1 должен находиться в одной папке с ф
 * Если в памяти не найден процесс djin.exe, скрипт запускает этот процесс из папки `$DJinPath`
   * При запуске скрипта есть возможность принудительно запустить обработчики (uploader) для всех файлов, указанных в конфигурации. Для этого нужно запустить скрипт с параметром -force: `.\FileMonitor.ps1 -force`
 * Каждые 20 миллисекунд (значение устанавливается в переменной `$timeout`) скрипт следит за изменением *.xml-файлов по пути `$PathToMonitor`
-* При изменении XML-файла, если он описан в массиве конфигурации `$ConfigTable`, запускается соответствующий ему исполняемый файл `$ConfigTable.Exe` с параметром `$ConfigTable.Cfg` (например, `.\runps2.bat ep.cfg`)
+* При изменении XML-файла, если он описан в массиве конфигурации `$ConfigTable`, XML копируется с новым именем, заданным в `Dst=`, и затем запускается соответствующий ему исполняемый файл `$ConfigTable.Exe` с параметром `$ConfigTable.Cfg` (например, `.\runps2.bat ep.cfg`)
 * В лог-файл `.\LOG\%DATE%-Watcher.cfg` сохраняются отчёты о запуске обработчиков (uploader).
 
 Версии:
