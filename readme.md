@@ -1,6 +1,9 @@
-Uploader DJin XML
-==================
-28.02.2020 Roman Ermakov <r.ermakov@emg.fm>
+# Uploader DJin XML
+![PowerShell](https://img.shields.io/badge/PowerShell-%235391FE.svg?style=for-the-badge&logo=powershell&logoColor=white)
+[![Licence](https://img.shields.io/github/license/ykmn/ff-Logger?style=for-the-badge)](./LICENSE)
+![Microsoft Windows](https://img.shields.io/badge/Microsoft-Windows-%FF5F91FF.svg?style=for-the-badge&logo=Microsoft%20Windows&logoColor=white)
+
+> 28.02.2020 Roman Ermakov <r.ermakov@emg.fm>
 
 Программы предназначены для обработки XML-файла с метаданными от Джин.ValueServer или Джин.Что-в-эфире
 и отправки метаданных различным получателям. В качестве получателей метаданных могут выступать:
