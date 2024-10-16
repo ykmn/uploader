@@ -50,37 +50,14 @@ $encoding = [Console]::OutputEncoding
 $timeout = 10
 # delay in milliseconds before copy source .xml to $Dst
 $delay = 800
-# make sure you adjust this to point to the folder you want to monitor
 
 # make sure you adjust this to point to the folder you want to monitor. Don't forget trailing slash!
 $PathToMonitor = "C:\XML\"
 #$PathToMonitor = "\\TECH-INFOSERV1\XML\"
-$DJinPath = "C:\Program Files (x86)\Digispot II\DJin_ValueServerCombo\DJin\"
 Write-Host "`nFileMonitor.ps1   v1.06 2020-03-10"
 Write-Host "Monitoring content of $PathToMonitor for changes every $timeout ms`n"
 
-<#
-    [PSCustomObject]@{        Xml = 'EP-MSK2.xml';          Cfg = 'ep.cfg';              Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'EP-LIGHT.xml';         Cfg = 'ep-light.cfg';        Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'EP-NEW.xml';           Cfg = 'ep-new.cfg';          Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'EP-RESIDANCE.xml';     Cfg = 'ep-residance.cfg';    Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'EP-TOP.xml';           Cfg = 'ep-top.cfg';          Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'EP-Urban.xml';         Cfg = 'ep-urban.cfg';        Dst = '';           Exe = '.\runps.bat' },
 
-    [PSCustomObject]@{        Xml = 'RR-MSK.xml';           Cfg = 'rr.cfg';              Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'RR-INTERNET_1.xml';    Cfg = 'rr-70.cfg';           Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'RR-INTERNET_2.xml';    Cfg = 'rr-80.cfg';           Dst = '';           Exe = '.\runps.bat' },
-    [PSCustomObject]@{        Xml = 'RR-INTERNET_3.xml';    Cfg = 'rr-90.cfg';           Dst = '';           Exe = '.\runps.bat' },
-
-    [PSCustomObject]@{ Xml = 'DR-MSK.xml';           Cfg = 'dr-msk.cfg';          Dst = '';        Exe = '.\runps.bat' },
-
-    [PSCustomObject]@{ Xml = 'Radio7_MOS.xml';       Cfg = 'r7-fm-v3.cfg';        Dst = 'R7-FMv3.xml';         Exe = '.\runps3.bat' },
-    [PSCustomObject]@{ Xml = 'Radio7_REG.xml';       Cfg = 'r7-online-v3.cfg';    Dst = 'R7-ONLINEv3.xml';     Exe = '.\runps3.bat' },
-
-    [PSCustomObject]@{ Xml = 'R7-MSK.xml';           Cfg = 'r7-online.cfg';    Dst = '';                    Exe = '.\runps.bat' },
-    [PSCustomObject]@{ Xml = 'R7-FM.xml';            Cfg = 'r7-fm.cfg';        Dst = '';                    Exe = '.\runps.bat' },
-
-#>
 $ConfigTable = @(
 
     [PSCustomObject]@{ Xml = 'РЕТРО-МОСКВА.xml';     Cfg = 'rr.cfg';           Dst = 'RR-MSKv3.xml';        Exe = '.\runps3.bat' },
@@ -243,19 +220,8 @@ try
             if ($count -eq 9)
             {
                 $count = 0
-                # Write-Host "." -NoNewline -ForegroundColor Yellow
                 Write-Host "." -NoNewline
-<#
-                # Check if DJin.ValueServer is running
-                if (!(Get-Process | Where-Object {$PSItem.ProcessName -eq 'DJin'}))
-                {
-                    # DJin is not running
-                    Write-Log -message "[-] DJin is not running. Starting..." -color Red
 
-                    & $DJinPath'\DJin.exe'
-                    Start-Sleep -Seconds 10
-                }
-#>
             } else {
                 $count = $count +1
                 # Write-Host ">" -NoNewline
