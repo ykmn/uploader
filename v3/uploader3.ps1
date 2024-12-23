@@ -320,7 +320,7 @@ function Write-Log {
     $message | Out-File $LogFile -Append -Encoding "UTF8"
 }
 
-if (!(Test-Path $currentdir"\"$cfg)) {
+if (!(Test-Path $currentdir"\"$cfg".json")) {
     Write-Host "No config file found."
     Break
 }
@@ -559,9 +559,9 @@ if ( `
         Write-Host "---- Running $feature $index ----" -BackgroundColor DarkGreen -ForegroundColor Black
         Write-Host
         
-
+        $token = $post.token
         $header = @{
-            Authorization="Bearer $_.token";
+            Authorization="Bearer $token";
             ContentType="application/xml";
             Charset="UTF-8"
         }
