@@ -1,0 +1,77 @@
+{
+    "XMLf":"\\\\tech-infoserv1\\c$\\XML\\UPLOAD\\EP-MSK2v3.xml",
+    "rArtistID":"8",
+    "rTitleID":"19",
+    "altArtistID":"8",
+    "altTitleID":"19",
+    "_comment1":"EP: 8/19/FALSE/8/19; RR: 7/17/TRUE/7/17; R7: 0/0/FALSE/0/0; DR: 7/17/FALSE/0/0",
+    "DefaultAT":"ru",
+    "_comment2":"если ru, то брать AT для RDS из пользовательских атрибутов",
+    "AltAT":"false",
+    "_comment3":"если TRUE, то в основных атрибутах находится транслит, а в пользовательских - русские AT, если FALSE, то основных атрибутах находятся русские AT",
+    "jsonlocal":true,
+    "ftp": [
+        {
+            "pass": "password",
+            "path": "/",
+            "server": "127.0.0.1",
+            "user": "anonymous"
+        },
+        {
+            "pass": "password",
+            "path": "/ftp/",
+            "server": "localhost:21",
+            "user": "radio"
+        }
+    ],
+    "jsoncustom": [
+        {
+            "jsonserver": "https://127.0.0.1:8080/handler"
+        }
+    ],
+    "post": [
+        {
+            "server": "https://webhook.site/e362b6bf-d73b-4f5d-9697-092e23a4b102",
+            "token": "1234567890"
+        },
+        {
+            "server": "https://webhook.site/e362b6bf-d73b-4f5d-9697-092e23a4b102",
+            "token": "0987654321"
+        },
+        {
+            "server": "https://localhost:8089/post?priority=3",
+            "token": "abcdefghijklmnopqrstuvwxyz"
+        }
+    ],
+    "prostream": [
+        {
+            "port": "6002",
+            "server": "localhost"
+        },
+        {
+            "port": "6002",
+            "server": "127.0.0.1"
+        }
+    ],
+    "rds": [
+        {
+            "commercialText": "Reklama: +7(495)620-4664",
+            "device": "SmartGen",
+            "address": "localhost",
+            "NonMusic": "Europa Plus Moscow",
+            "port": "5001",
+            "porttype": "UDP",
+            "site": "www.europaplus.ru"
+        },
+        {
+            "commercialText": "Reklama: +7(495)620-4664",
+            "device": "LinkShare",
+            "address": "127.0.0.1",
+            "NonMusic": "Europa Plus Moscow",
+            "port": "5000",
+            "porttype": "TCP",
+            "site": "www.europaplus.ru"
+        }
+
+    ]
+}

@@ -4,10 +4,11 @@
 *.bak
 *.xml
 *.log
-jsons/*.*
+v3/-old/*.*
+v3/jsons/*.*
 log/*.*
-tmp/*.*
-test/*.*
+v3/tmp/*.*
+v3/test/*.*
 v3/jsons/test.cfg.rds-current.txt
 CopyXML/filecopy.bat.bak extended logging
 CopyXML/filecopy.bat.bak ok medium logging
