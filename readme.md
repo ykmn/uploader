@@ -3,13 +3,13 @@
 [![Licence](https://img.shields.io/github/license/ykmn/ff-Logger?style=for-the-badge)](./LICENSE)
 ![Microsoft Windows](https://img.shields.io/badge/Microsoft-Windows-%FF5F91FF.svg?style=for-the-badge&logo=Microsoft%20Windows&logoColor=white)
 
-> 28.02.2020 Roman Ermakov <r.ermakov@emg.fm>
+> 23.12.2024 Roman Ermakov <r.ermakov@emg.fm>
 
 Программы предназначены для обработки XML-файла с метаданными от Джин.ValueServer или Джин.Что-в-эфире
 и отправки метаданных различным получателям. В качестве получателей метаданных могут выступать:
 
-* JSON-сервер хостинга. Метаданные будут преобразованы в JSON с текущей и следующими по плейлисту песнями в следующем виде:
-```JSON
+* JSON-сервер хостинга, получающий преобразованые в JSON метаданные с текущей и следующими по плейлисту песнями в следующем виде:
+```json
 {
 "stream":  "myradio.cfg",
 "songs":  [
@@ -20,18 +20,27 @@
 }
 ```
 
-* Один или два FTP-сервера, на которые выгрузится XML-файл с метаданными от Джин.ValueServer.
-* Один или два энкодера Omnia Z/IPStream или ProStream.
-* RDS-кодер DEVA SmartGen с передачей данных по TCP/UDP или встроенный RDS-кодер FM-процессора Orban 8700i с передачей данных по TCP.
+* JSON-сервер хостинга, на который выгрузится XML-файл с метаданными от Джин "Что в эфире".
+
+* локальная папка, в которую сохранится JSON-файл в формате:
+```json
+{
+  "dbID": "178717",
+  "title": "Moonlit Floor",
+  "artist": "Lisa",
+  "at": "LISA - MOONLIT FLOOR"
+}
+```
+
+* один или несколько FTP-серверов, на которые выгрузится XML-файл с метаданными от Джин "Что в эфире".
+* один или несколько энкодеров Omnia Z/IPStream или ProStream.
+* один или несколько RDS-кодеров DEVA SmartGen с передачей данных по TCP/UDP или встроенных в FM-процессор Orban 8700i RDS-кодеров с передачей данных по TCP.
 
 Принцип работы.
 ---------------
 * [FileMonitor.ps1](FileMonitor/readme.md) следит за указанной папкой, и если в ней изменился XML-файл из списка, скрипт копирует этот файл в подпапку UPLOAD\,
-запускает обработчик `uploader2` или `uploader2` и в качестве параметра передаёт ему имя изменённого XML-файла.
+запускает обработчик `uploader3` и в качестве параметра передаёт ему имя изменённого XML-файла.
 Дополнительно `FileMonitor` может переименовать этот XML-файл.
-
-* [uploader2](v2/readme.md) работает с XML-файлами, которые генерирует Джин.ValueServer.
-Запуск скрипта `uploader2` может выполнять как Джин.ValueServer, так и [FileMonitor.ps1](FileMonitor/readme.md)
 
 * [uploader3](v3/readme.md) работает с XML-файлами, которые генерирует модуль Джин [Что играет в плеере 3.0 Расширенный](https://redmine.digispot.ru/projects/digispot/wiki/%D0%A7%D1%82%D0%BE_%D0%B8%D0%B3%D1%80%D0%B0%D0%B5%D1%82_%D0%B2_%D0%BF%D0%BB%D0%B5%D0%B5%D1%80%D0%B5_%D0%B2_%D0%B2%D0%B8%D0%B4%D0%B5_XML_v_3_0).
 Запуск этого скрипта выполняется скриптом [FileMonitor.ps1](FileMonitor/readme.md)
