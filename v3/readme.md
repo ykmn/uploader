@@ -29,7 +29,7 @@ Uploader 3.06.000
 ---------------------------
 ```json
 {
-    "XMLf":"\\\\tech-infoserv1\\c$\\XML\\UPLOAD\\EP-MSK2v3.xml",
+    "XMLf":"\\\\server\\share\\XML\\UPLOAD\\EP-MSK2v3.xml",
     "rArtistID":"8",
     "rTitleID":"19",
     "altArtistID":"8",
@@ -150,7 +150,7 @@ Uploader 3.06.000
         },
         {
             "pass": "password",
-            "path": "/ftp/",
+            "path": "/ftp-root/",
             "server": "localhost:21",
             "user": "radio"
         },
