@@ -2,13 +2,13 @@
     "XMLf":"\\\\server\\share\\XML\\UPLOAD\\EP-MSK2v3.xml",
     "rArtistID":"8",
     "rTitleID":"19",
+    "AltAT":"false",
+    "_comment1":"если TRUE, то в основных атрибутах находится транслит, а в пользовательских - русские AT, если FALSE, то основных атрибутах находятся русские AT",
     "altArtistID":"8",
     "altTitleID":"19",
-    "_comment1":"EP: 8/19/FALSE/8/19; RR: 7/17/TRUE/7/17; R7: 0/0/FALSE/0/0; DR: 7/17/FALSE/0/0",
+    "_comment2":"EP: 8/19/FALSE/8/19; RR: 7/17/TRUE/7/17; R7: 0/0/FALSE/0/0; DR: 7/17/FALSE/0/0",
     "DefaultAT":"ru",
-    "_comment2":"если ru, то брать AT для RDS из пользовательских атрибутов",
-    "AltAT":"false",
-    "_comment3":"если TRUE, то в основных атрибутах находится транслит, а в пользовательских - русские AT, если FALSE, то основных атрибутах находятся русские AT",
+    "_comment3":"если ru, то брать AT для RDS из пользовательских атрибутов",
     "jsonlocal":true,
     "ftp": [
         {

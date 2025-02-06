@@ -34,29 +34,29 @@
     * please validate json before use
     * notice double slashes \\ for each single slash \ in XML file path
 {
-    "XMLf": "\\\\server\\share\\XML\\UPLOAD\\EP-MSK2v3.xml",
-    "rArtistID": "8",
-    "rTitleID": "19",
-    "altArtistID": "8",
-    "altTitleID": "19",
-    "_comment1": "EP: 8/19/FALSE/8/19; RR: 7/17/TRUE/7/17; R7: 0/0/FALSE/0/0; DR: 7/17/FALSE/0/0",
-    "AltAT": "false",
-    "_comment2": "если TRUE, то в основных атрибутах находится транслит, а в пользовательских - русские AT, если FALSE, то основных атрибутах находятся русские AT",
-    "DefaultAT": "ru",
-    "_comment3": "если ru, то брать AT для RDS из пользовательских атрибутов",
-
+    "XMLf":"\\\\tech-infoserv1\\c$\\XML\\UPLOAD\\EP-MSK2v3.xml",
+    "rArtistID":    "8",
+    "rTitleID":     "19",
+    "altArtistID":  "8",
+    "altTitleID":   "19",
+    "_comment1":    "EP: 8/19/FALSE/8/19; RR: 7/17/TRUE/7/17; R7: 0/0/FALSE/0/0; DR: 7/17/FALSE/0/0",
+    "DefaultAT":    "ru",
+    "_comment2":    "если ru, то брать AT для RDS из пользовательских атрибутов",
+    "AltAT":        "false",
+    "_comment3":    "если TRUE, то в основных атрибутах находится транслит, а в пользовательских - русские AT, если FALSE, то основных атрибутах находятся русские AT",
+    "jsonlocal": true,
     "ftp": [
         {
-            "ftppass": "pass",
-            "ftppath": "/ftp/",
-            "ftpserver": "127.0.0.1",
-            "user": "radio"
+            "pass":     "password",
+            "path":     "/ftproot/folder/",
+            "server":   "127.0.0.1",
+            "user":     "anonymous"
         },
         {
-            "ftppass": "pass",
-            "ftppath": "/ftp/",
-            "ftpserver": "localhost:21",
-            "user": "radio"
+            "pass":     "password",
+            "path":     "/ftp/",
+            "server":   "localhost:21",
+            "user":     "radio"
         }
     ],
     "jsoncustom": [
@@ -64,50 +64,50 @@
             "jsonserver": "https://127.0.0.1:8080/handler"
         }
     ],
-    "jsonlocal": true,
     "post": [
         {
             "server": "https://webhook.site/e362b6bf-d73b-4f5d-9697-092e23a4b102",
-            "token": "mDAtrmB5MZ4JZSvzJb9jHMLbme45F5zY"
+            "token": "1234567890"
         },
         {
             "server": "https://webhook.site/e362b6bf-d73b-4f5d-9697-092e23a4b102",
-            "token": "mDAtrmB5MZ4JZSvzJb9jHMLbme45F5zY-abc"
+            "token": "0987654321"
         },
         {
             "server": "https://localhost:8089/post?priority=3",
-            "token": "mDAtrmB5MZ4JZSvzJb9jHMLbme45F5zY"
+            "token": "abcdefghijklmnopqrstuvwxyz"
         }
     ],
     "prostream": [
         {
-            "zipPort": "6002",
-            "zipServer": "localhost"
+            "port":     "6002",
+            "server":   "localhost"
         },
         {
-            "zipPort": "6002",
-            "zipServer": "127.0.0.1"
+            "port":     "6002",
+            "server":   "127.0.0.1"
         }
     ],
     "rds": [
         {
-            "rdsCommercial": "Reklama: +7(495)620-4664",
-            "rdsDevice": "SmartGen",
-            "rdsIP": "localhost",
-            "rdsNonMusic": "Europa Plus Moscow",
-            "rdsPort": "5001",
-            "rdsPortType": "UDP",
-            "rdsSite": "www.europaplus.ru"
+            "commercialText":   "Reklama: +7(495)620-4664",
+            "device":           "SmartGen",
+            "address":          "localhost",
+            "NonMusic":         "Europa Plus Moscow",
+            "port":             "5001",
+            "porttype":         "UDP",
+            "site":             "www.europaplus.ru"
         },
         {
-            "rdsCommercial": "Reklama: +7(495)620-4664",
-            "rdsDevice": "LinkShare",
-            "rdsIP": "127.0.0.1",
-            "rdsNonMusic": "Europa Plus Moscow",
-            "rdsPort": "5000",
-            "rdsPortType": "TCP",
-            "rdsSite": "www.europaplus.ru"
+            "commercialText":   "Reklama: +7(495)620-4664",
+            "device":           "LinkShare",
+            "address":          "127.0.0.1",
+            "NonMusic":         "Europa Plus Moscow",
+            "port":             "5000",
+            "porttype":         "TCP",
+            "site":             "www.europaplus.ru"
         }
+
     ]
 }
 
@@ -133,12 +133,12 @@ V3.02 2022-02-10 Added RDS for Sound4 Link&Share protocol, some SmartGen RT+ cle
 V3.03 2022-07-11 XMLs with Retransmission Blocks now upload to FTP too.
 V3.04 2024-11-13 Saving Artist-Title to local JSON for videowall output.
 V3.05 2024-11-19 Refactoring; sending XML with POST request to 2 servers. BREAKING CHANGE: settings in .cfg shoulb be as PARAMETER = value (was PARAMETER=value)
-V3.06 2024-12-20 BREAKING CHANGE: settings are now in .json; array with 'unlimited' recepients of each receiver type
+V3.06 2024-12-23 BREAKING CHANGE: settings are now in .json; array with 'unlimited' recepients of each receiver type; changed FTP method.
 #>
 
 # Handling command-line parameters
 param (
-    #[Parameter(Mandatory=$true)][string]$cfg = "test-ext.cfg.json",
+    #[Parameter(Mandatory=$true)][string]$cfg = "test.cfg.json",
     [Parameter(Mandatory=$true)][string]$cfg,
     [Parameter(Mandatory=$false)][switch]$force,
     [Parameter(Mandatory=$false)][switch]$test
@@ -147,11 +147,12 @@ param (
 
 #####################################################################################
 Clear-Host
-Write-Host "`nUploader 3.06.000 <r.ermakov@emg.fm> 2024-12-20 https://github.com/ykmn/uploader"
+Write-Host "`nUploader 3.06.002 <r.ermakov@emg.fm> 2025-01-20 https://github.com/ykmn/uploader"
 Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
 # If $test set to $true then temporary xmls and jsons will not be removed
-if ($force -eq $true) { $forced = "FORCED" } else {$forced = "" }
+#if ($force -eq $true) { $forced = "FORCED" } else {$forced = "" }
+$forced = ""
 
 if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "`n`nThis script works with Windows PowerShell 5.0 or newer.`nPlease upgrade!`n"
@@ -348,6 +349,9 @@ Write-Host
 if (!(Test-Path $currentdir"\log")) {
     New-Item -Path $currentdir"\log" -Force -ItemType Directory | Out-Null
 }
+if (!(Test-Path $currentdir"\history")) {
+    New-Item -Path $currentdir"\history" -Force -ItemType Directory | Out-Null
+}
 if (!(Test-Path $currentdir"\tmp")) {
     New-Item -Path $currentdir"\tmp" -Force -ItemType Directory | Out-Null
 }
@@ -488,6 +492,15 @@ Write-Log -message "    : $scriptstart Now $status : $type/ $artist - $title" -c
 Write-Host
 Write-Host STORING NOW PLAYING SONG: -BackgroundColor Yellow -ForegroundColor Black
 Write-Host Type:$type / Artist:$artist / Title:$title / DBid:$dbid -BackgroundColor Yellow -ForegroundColor Black
+
+# Saving history file
+$historyFile = $currentdir + "\history\" + $(Get-Date -Format yyyy-MM-dd) + "-" + $cfg + "-history.txt"
+$LogNow = Get-Date -Format HH:mm:ss.fff
+$message = $(Get-Date -Format HH:mm:ss.fff) + " /" + $type + "/ " + $artist + " - " + $title
+$message | Out-File $historyFile -Append -Encoding "UTF8"
+
+
+
 # Storing current AT for ProStream and RDS
 $cArtist = $artist
 $cTitle = $title
@@ -550,10 +563,10 @@ if ( `
 if ( `
     ( ($settings.post.Length -gt 0) `
 	-and ($status -eq "playing") `
-    -or ($forced = "FORCED") )`
+    -or ($forced -eq "FORCED") )`
 ) {
     foreach ( $post in $settings.post ) {
-        $feature = "POST"
+        $feature = "XML POST"
         $index = [array]::IndexOf($settings.post, $post)+1      # starting from 0
         Write-Host
         Write-Host "---- Running $feature $index ----" -BackgroundColor DarkGreen -ForegroundColor Black
@@ -569,15 +582,15 @@ if ( `
         Write-Host "Ready to post XML to $uri :" -ForegroundColor DarkGreen
         $Error.Clear()
         try { 
-            Write-Log -message "[+] : $scriptstart $forced XML POST started to $uri" -color Green
+            Write-Log -message "[+] : $scriptstart $feature $index $forced started to $uri" -color Green
             Invoke-WebRequest -Uri $uri -Headers $header -ContentType "application/xml" -Method POST -Body $xmlfile
         } catch { 
             Write-Host "Webrequest errorcode:" $Error -BackgroundColor Red -ForegroundColor White
             $ErrorMessage = $_.Exception.Message
             $FailedItem = $_.Exception.ItemName
-            Write-Log -message "[-] : $scriptstart $forced XML POST to $uri error: $Error" -color Red
+            Write-Log -message "[-] : $scriptstart $feature $index $forced to $uri error: $Error" -color Red
         }
-        Write-Log -message "    : $scriptstart POST operation done."
+        Write-Log -message "    : $scriptstart $feature $index $forced operation done."
     }
 }
 
@@ -592,7 +605,7 @@ if ( `
     ( ($settings.jsoncustom.Length -gt 0) `
 	-and ($status -eq "playing") `
     -and ($type -eq "3") `
-    -or ($forced = "FORCED") )`
+    -or ($forced -eq "FORCED") )`
 ) {
     foreach ( $post in $settings.jsoncustom ) {
         $index = [array]::IndexOf($settings.jsoncustom, $post)+1
@@ -805,7 +818,7 @@ $title = $cTitle
 if ( `
     ( ($settings.ProStream.Length -gt 0) `
 	-and ($status -eq "playing") `
-    -or ($forced = "FORCED") )`
+    -or ($forced -eq "FORCED") )`
 ) {
     foreach ( $post in $settings.ProStream ) {
         $feature = "PROSTREAM"
@@ -861,7 +874,7 @@ $title = $cTitle
 if ( `
     ( ($settings.RDS.Length -gt 0) `
 	-and ($status -eq "playing") `
-    -or ($forced = "FORCED") )`
+    -or ($forced -eq "FORCED") )`
 ) {
     foreach ( $post in $settings.RDS ) {
         $index = [array]::IndexOf($settings.RDS, $post)+1
@@ -1015,7 +1028,7 @@ if ( `
 if ( `
     ( ($settings.FTP.Length -gt 0) `
 	-and ($status -eq "playing") `
-    -or ($forced = "FORCED") )`
+    -or ($forced -eq "FORCED") )`
 ) {
     #Import-Module WinSCP
     foreach ( $post in $settings.FTP ) {
@@ -1039,25 +1052,35 @@ if ( `
 
         $Error.Clear()
         try { 
-            Write-Log -message "[+] : $scriptstart $forced FTP upload started to $post.server" -color Green
-            $webclient =  New-Object System.Net.WebClient
-            $uri =  New-Object System.Uri($remotefile)
-            #Error was happening because the method call was attempting to use the HttpProxy on the Server machine. 
-            #If the proxy is not set to null explicitly in your code, then you will get error - "An exception occurred during a webclient request"
-            $webclient.Proxy = $NULL 
-            $webclient.Credentials = New-Object System.Net.NetworkCredential($post.user,$post.pass)
-            $webclient.UploadFile($uri, $xmlf.FullName)
+            Write-Log -message "[+] : $scriptstart $forced FTP upload started to $ftp" -color Green
+
+            $request = [Net.WebRequest]::Create($remotefile)
+            $request.KeepAlive = $false
+            $request.Credentials = New-Object System.Net.NetworkCredential($post.user,$post.pass)
+            $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile 
+            
+            $fileStream = [System.IO.File]::OpenRead($xmlf.FullName)
+            $ftpStream = $request.GetRequestStream()
+            $fileStream.CopyTo($ftpStream)
+            
+            $ftpStream.Dispose()
+            $fileStream.Dispose()
+
+            # $webclient =  New-Object System.Net.WebClient
+            # $uri =  New-Object System.Uri($remotefile)
+            # #Error was happening because the method call was attempting to use the HttpProxy on the Server machine. 
+            # #If the proxy is not set to null explicitly in your code, then you will get error - "An exception occurred during a webclient request"
+            # $webclient.Proxy = $NULL 
+            # $webclient.Credentials = New-Object System.Net.NetworkCredential($post.user,$post.pass)
+            # $webclient.UploadFile($uri, $xmlf.FullName)
+            # $webclient.Dispose()
         } catch { 
             Write-Host "Webclient errorcode:" $Error -BackgroundColor Red -ForegroundColor White
             $ErrorMessage = $_.Exception.Message
             $FailedItem = $_.Exception.ItemName
-            Write-Log -message "[-] : $scriptstart $forced FTP upload to $post.server error: $Error" -color Red
+            Write-Log -message "[-] : $scriptstart $forced FTP upload to $ftp error: $Error" -color Red
         }
         Write-Log -message "    : $scriptstart $feature $index operation done."
-
-
-
-
     }
 }
 
@@ -1077,4 +1100,4 @@ if ($test -ne $true ) {
 
 Write-Log -message "[*] : $scriptstart $forced Script finished normally"
 Write-Host `n
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 1

@@ -1,1 +1,0 @@
-LOGIN admin,admin^RDS.PS_Wide=RETRO FM 70/80/90^LOGOUT
