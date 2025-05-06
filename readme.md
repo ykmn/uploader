@@ -3,7 +3,7 @@
 [![Licence](https://img.shields.io/github/license/ykmn/ff-Logger?style=for-the-badge)](./LICENSE)
 ![Microsoft Windows](https://img.shields.io/badge/Microsoft-Windows-%FF5F91FF.svg?style=for-the-badge&logo=Microsoft%20Windows&logoColor=white)
 
-> 23.12.2024 Roman Ermakov <r.ermakov@emg.fm>
+> 06.05.2025 Roman Ermakov <r.ermakov@emg.fm>
 
 Программы предназначены для обработки XML-файла с метаданными от Джин.ValueServer или Джин.Что-в-эфире
 и отправки метаданных различным получателям. В качестве получателей метаданных могут выступать:
@@ -20,7 +20,7 @@
 }
 ```
 
-* JSON-сервер хостинга, на который выгрузится XML-файл с метаданными от Джин "Что в эфире".
+* JSON-сервер хостинга, на который методом POST отправится XML-файл с метаданными от Джин "Что в эфире".
 
 * локальная папка, в которую сохранится JSON-файл в формате:
 ```json

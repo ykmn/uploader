@@ -6,5 +6,5 @@ title %1
 for /F "tokens=1-3 delims=. " %%a in ("%date%") do ( set yyyymmdd=%%c-%%b-%%a )
 echo %yyyymmdd% %time% %1 >> .\log\"%yyyymmdd% Running runps3.log"
 
-pwsh -NoProfile -ExecutionPolicy bypass -File "uploader3.06.002.ps1" %1 %2
+pwsh -NoProfile -ExecutionPolicy bypass -File "uploader3.06.004.ps1" %1 %2
 ::pause

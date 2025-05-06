@@ -34,7 +34,7 @@
     * please validate json before use
     * notice double slashes \\ for each single slash \ in XML file path
 {
-    "XMLf":"\\\\tech-infoserv1\\c$\\XML\\UPLOAD\\EP-MSK2v3.xml",
+    "XMLf":"\\\\server\\share\\XML\\UPLOAD\\EP-MSK2v3.xml",
     "rArtistID":    "8",
     "rTitleID":     "19",
     "altArtistID":  "8",
@@ -147,7 +147,7 @@ param (
 
 #####################################################################################
 Clear-Host
-Write-Host "`nUploader 3.06.002 <r.ermakov@emg.fm> 2025-01-20 https://github.com/ykmn/uploader"
+Write-Host "`nUploader 3.06.002 <r.ermakov@emg.fm> 2025-01-27 https://github.com/ykmn/uploader"
 Write-Host "This script uses Extended cur_playing.XML from DJin X-Player.`n"
 
 # If $test set to $true then temporary xmls and jsons will not be removed
