@@ -38,9 +38,9 @@
 
 Принцип работы.
 ---------------
-* [FileMonitor.ps1](FileMonitor/readme.md) следит за указанной папкой, и если в ней изменился XML-файл из списка, скрипт копирует этот файл в подпапку UPLOAD\,
+* [FileMonitor.ps1](FileMonitor/FileMonitor readme.md) следит за указанной папкой, и если в ней изменился XML-файл из списка, скрипт копирует этот файл в подпапку UPLOAD\,
 запускает обработчик `uploader3` и в качестве параметра передаёт ему имя изменённого XML-файла.
 Дополнительно `FileMonitor` может переименовать этот XML-файл.
 
-* [uploader3](v3/readme.md) работает с XML-файлами, которые генерирует модуль Джин [Что играет в плеере 3.0 Расширенный](https://redmine.digispot.ru/projects/digispot/wiki/%D0%A7%D1%82%D0%BE_%D0%B8%D0%B3%D1%80%D0%B0%D0%B5%D1%82_%D0%B2_%D0%BF%D0%BB%D0%B5%D0%B5%D1%80%D0%B5_%D0%B2_%D0%B2%D0%B8%D0%B4%D0%B5_XML_v_3_0).
-Запуск этого скрипта выполняется скриптом [FileMonitor.ps1](FileMonitor/readme.md)
+* [uploader3](v3/Uploader readme.md) работает с XML-файлами, которые генерирует модуль Джин [Что играет в плеере 3.0 Расширенный](https://redmine.digispot.ru/projects/digispot/wiki/%D0%A7%D1%82%D0%BE_%D0%B8%D0%B3%D1%80%D0%B0%D0%B5%D1%82_%D0%B2_%D0%BF%D0%BB%D0%B5%D0%B5%D1%80%D0%B5_%D0%B2_%D0%B2%D0%B8%D0%B4%D0%B5_XML_v_3_0).
+Запуск этого скрипта выполняется скриптом [FileMonitor.ps1](FileMonitor/FileMonitor readme.md)
